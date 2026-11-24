@@ -189,6 +189,16 @@
   .tree-arrow { font-size: 12px; transition: transform .2s ease; flex-shrink: 0; }
   .tree-hdr.expanded .tree-arrow { transform: rotate(90deg); }
 
+  .dup-pill {
+    display: inline-block; background: #fee2e2; color: #b91c1c;
+    border: 1px solid #fca5a5; font-size: 11px; font-weight: 700;
+    padding: 1px 7px; border-radius: 99px; margin-left: 6px;
+  }
+  .uid-code {
+    font-family: monospace; font-size: 12px; background: #f1f5f9;
+    padding: 2px 6px; border-radius: 4px; color: #0f172a;
+  }
+
   main { max-width: 860px; margin: 0 auto; padding: 14px; }
   section {
     background: var(--card); border-radius: 10px; padding: 14px 16px 18px;
@@ -377,7 +387,7 @@
   });
 </script>
 
-<!-- HEADER: डाव्या बाजूला लोगो, उजव्या बाजूला मेन्यू रेषा (सर्व युझर्ससाठी) -->
+<!-- HEADER: डाव्या बाजूला लोगो, उजव्या बाजूला मेन्यू रेषा -->
 <header>
   <div class="hdr-left">
     <img src="icons/android/launchericon-72x72.png" alt="Logo" class="brand-logo">
@@ -389,7 +399,7 @@
   <button id="btnMenu" type="button" onclick="toggleDrawer(true)" aria-label="मेन्यू">&#9776;</button>
 </header>
 
-<!-- Side Menu Drawer (उजव्या बाजूने उघडणारा व शेवटी लाल अक्षरात Logout असलेला मेन्यू) -->
+<!-- Side Menu Drawer -->
 <div id="drawerBackdrop" onclick="toggleDrawer(false)"></div>
 <aside id="sideDrawer">
   <div class="drawer-head">
@@ -506,7 +516,7 @@
       <button type="button" class="home-card-btn home-card-new" onclick="switchView('estimate')">
         <span class="hc-icon">📝</span>
         <span class="hc-title">नवीन अंदाजपत्रक तयार करा</span>
-        <span class="hc-sub">फॉर्म भरून QR सह PDF अंदाजपत्रक तयार करा</span>
+        <span class="hc-sub">फॉर्म भरून युनिक ID व QR सह PDF तयार करा</span>
       </button>
       <button type="button" class="home-card-btn home-card-list" onclick="switchView('logs')">
         <span class="hc-icon">📂</span>
@@ -616,7 +626,7 @@
     </form>
   </div>
 
-  <!-- PREPARED ESTIMATES HIERARCHICAL VIEW (योजना -> वर्ष -> बाब -> लाभार्थी) -->
+  <!-- PREPARED ESTIMATES HIERARCHICAL VIEW -->
   <section id="logsView" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
       <h2 style="margin:0;border:none;padding:0;">तयार झालेले अंदाजपत्रके</h2>
@@ -1232,7 +1242,7 @@ function onPdf(ev) {
   var btn = document.getElementById('btnPdf');
   btn.disabled = true;
   btn.textContent = 'PDF तयार होत आहे…';
-  showMsg('ok', 'कृपया थांबा – निवडलेल्या तालुक्याच्या शीटमध्ये माहिती जतन होत आहे, QR बसवला जात आहे व PDF तयार होत आहे…');
+  showMsg('ok', 'कृपया थांबा – निवडलेल्या तालुक्याच्या शीटमध्ये माहिती जतन होत आहे, युनिक आयडी व QR बसवला जात आहे व PDF तयार होत आहे…');
 
   apiPost({ action: 'saveAndPdf', data: payloadData })
     .then(function (r) {
@@ -1243,8 +1253,10 @@ function onPdf(ev) {
         window.scrollTo(0, 0);
         return;
       }
+      var dupNote = r.isDuplicate ? '\n⚠️ सूचना: द्विरुक्ती (यापूर्वीही असे अंदाजपत्रक तयार केले आहे).' : '';
       showMsg('ok',
-        'अभिनंदन! PDF तयार झाले आणि QR पहिल्या पानावर बसवला.\n\n' +
+        'अभिनंदन! PDF तयार झाले आणि QR च्या खाली युनिक आयडी बसवला.\n' +
+        'युनिक आयडी: ' + esc(r.uniqueId || '') + dupNote + '\n\n' +
         '<a href="' + r.url + '" target="_blank">PDF उघडा / प्रिंट करा</a>\n\n' +
         'फाइल: ' + r.name);
       window.scrollTo(0, 0);
@@ -1315,7 +1327,6 @@ function renderLogsHierarchy(logs) {
     return;
   }
 
-  // १. योजना -> २. वर्ष -> ३. बाब -> ४. लाभार्थी
   var tree = {};
   logs.forEach(function (row) {
     var schemeLabel = row.schemeMr || row.scheme || 'इतर योजना';
@@ -1361,13 +1372,14 @@ function renderLogsHierarchy(logs) {
                   '<span class="tree-arrow">▶</span>' +
                 '</button>';
         html += '<div class="tree-body"><div class="tbl-wrap"><table class="data-tbl">' +
-                  '<thead><tr><th>अ.क्र.</th><th>लाभार्थीचे नाव</th><th>App ID</th><th>गाव</th><th>रक्कम (₹)</th><th>PDF</th></tr></thead><tbody>';
+                  '<thead><tr><th>अ.क्र.</th><th>लाभार्थीचे नाव</th><th>Unique ID</th><th>App ID</th><th>रक्कम (₹)</th><th>PDF</th></tr></thead><tbody>';
         benList.forEach(function (b, idx) {
+          var dupBadge = b.isDuplicate ? '<span class="dup-pill">द्विरुक्ती</span>' : '';
           html += '<tr>' +
                     '<td>' + (idx + 1) + '</td>' +
-                    '<td><strong>' + esc(b.beneficiary) + '</strong><br><small style="color:#64748b;">' + esc(b.taluka) + ' · ' + esc(b.timestamp) + '</small></td>' +
+                    '<td><strong>' + esc(b.beneficiary) + '</strong>' + dupBadge + '<br><small style="color:#64748b;">' + esc(b.village) + ' · ' + esc(b.taluka) + '</small></td>' +
+                    '<td><span class="uid-code">' + esc(b.uniqueId || '-') + '</span></td>' +
                     '<td>' + esc(b.appId) + '</td>' +
-                    '<td>' + esc(b.village) + '</td>' +
                     '<td>' + esc(b.amount) + '</td>' +
                     '<td>' + (b.pdfUrl ? '<a href="' + esc(b.pdfUrl) + '" target="_blank">उघडा</a>' : '-') + '</td>' +
                   '</tr>';
