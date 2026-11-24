@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wsm-well-estimate-v10';
+const CACHE_NAME = 'wsm-well-estimate-v11';
 const ASSETS = [
   './',
   './index.html',
