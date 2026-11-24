@@ -484,19 +484,57 @@
   }
 </style>
 
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
+
+  <script>
+  // वेलकम स्क्रीन दाखवण्याचे आणि अ‍ॅनिमेशन पुन्हा सुरू करण्याचे फंक्शन
+  function showWelcomeCurtain() {
     const screen = document.getElementById("welcome-curtain-screen");
-    const btn = document.getElementById("enterAppBtn");
+    if (!screen) return;
 
+    // आधीच्या अ‍ॅनिमेशनची अवस्था रीसेट करा
+    screen.classList.remove("hide", "start-reveal");
+
+    const animatedEls = screen.querySelectorAll(
+      ".wave-front, .wave-back, .fade-photo, .delay-photo, .abhang-quote, .wc-btn"
+    );
+
+    animatedEls.forEach((el) => {
+      el.style.animation = "none";
+      void el.offsetWidth; // ब्राउझरला रीसेट समजण्यासाठी reflow
+      el.style.animation = "";
+    });
+
+    // नवीन अ‍ॅनिमेशन सुरू करा
     requestAnimationFrame(() => {
-      screen.classList.add("start-reveal");
+      requestAnimationFrame(() => {
+        screen.classList.add("start-reveal");
+      });
     });
+  }
 
-    btn.addEventListener("click", () => {
-      screen.classList.add("hide");
-    });
+  // वेलकम स्क्रीन लपवण्याचे फंक्शन
+  function hideWelcomeCurtain() {
+    const screen = document.getElementById("welcome-curtain-screen");
+    if (!screen) return;
+    screen.classList.add("hide");
+  }
+
+  // १. पेज लोड किंवा रिफ्रेश झाल्यावर वेलकम स्क्रीन दाखवा
+  window.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("enterAppBtn");
+    if (btn) {
+      btn.addEventListener("click", hideWelcomeCurtain);
+    }
+
+    // रिफ्रेश किंवा पहिल्या लोडवर वेलकम स्क्रीन चालवा
+    showWelcomeCurtain();
   });
+
+  // २. लॉगिन यशस्वी झाल्यावर तुमच्या लॉगिन फंक्शनमधून हे कॉल करा:
+  // उदाहरण:
+  // function onLoginSuccess(userData) {
+  //   showWelcomeCurtain();
+  // }
 </script>
 <header>
   <div class="hdr-left">
