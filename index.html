@@ -52,17 +52,78 @@
     border-radius: 7px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: none;
   }
 
-  /* Install Gate Card */
+  /* Install Gate & Professional Installing Animation */
   .install-box {
     text-align: center; padding: 24px 18px;
   }
-  .install-logo {
-    width: 112px; height: 112px; border-radius: 50%; object-fit: cover;
-    box-shadow: 0 4px 14px rgba(0,0,0,.15); border: 3px solid var(--primary); margin: 0 auto 14px;
+  .install-logo-wrap {
+    position: relative; width: 124px; height: 124px; margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .install-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 4px solid #e2e8f0; border-top-color: var(--accent);
+    display: none; animation: spinRing 1s linear infinite;
+  }
+  .installing-active .install-ring {
     display: block;
   }
+  @keyframes spinRing {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .install-logo {
+    width: 108px; height: 108px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15); border: 3px solid var(--primary);
+    display: block; transition: transform .3s ease;
+  }
+  .installing-active .install-logo {
+    transform: scale(0.94);
+  }
+  .install-progress-track {
+    display: none; width: 100%; max-width: 340px; height: 8px;
+    background: #e2e8f0; border-radius: 99px; overflow: hidden; margin: 14px auto 6px;
+  }
+  .installing-active .install-progress-track {
+    display: block;
+  }
+  .install-progress-bar {
+    width: 35%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 99px; animation: slideBar 1.3s ease-in-out infinite;
+  }
+  @keyframes slideBar {
+    0% { transform: translateX(-100%); width: 45%; }
+    50% { transform: translateX(85%); width: 65%; }
+    100% { transform: translateX(220%); width: 45%; }
+  }
   .install-actions {
-    display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 18px auto 0;
+    display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 16px auto 0;
+  }
+
+  /* Login Hero Logo */
+  .login-hero {
+    text-align: center; margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid #e6eaee;
+  }
+  .login-hero img {
+    width: 104px; height: 104px; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--primary); box-shadow: 0 4px 12px rgba(31,78,121,.16);
+    display: block; margin: 0 auto 8px;
+  }
+  .login-hero .lh-title { font-size: 16px; font-weight: 700; color: var(--primary); }
+  .login-hero .lh-sub { font-size: 12.5px; color: var(--muted); }
+
+  /* Password Eye Toggle */
+  .pwd-wrap {
+    position: relative; display: flex; align-items: center;
+  }
+  .pwd-wrap input {
+    padding-right: 44px;
+  }
+  .pwd-eye-btn {
+    position: absolute; right: 8px; background: none; border: none;
+    cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 6px;
+    color: #475569;
   }
 
   /* Side Drawer Menu */
@@ -145,6 +206,7 @@
   .btn-success { background: var(--accent); color: #fff; }
   .btn-secondary { background: #eef1f5; color: #384250; }
   .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warning { background: #f59e0b; color: #16202a; }
   .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
 
   footer.action-bar {
@@ -165,6 +227,7 @@
 
   .badge-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
   .badge-inactive { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
+  .badge-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
   .row-actions { display: flex; gap: 5px; flex-wrap: wrap; }
 
   @media (max-width: 580px) {
@@ -198,6 +261,7 @@
   <nav class="drawer-nav">
     <button class="nav-item-btn active" id="navEstimate" onclick="switchView('estimate')">📝 अंदाजपत्रक तयार करा</button>
     <button class="nav-item-btn" id="navLogs" onclick="switchView('logs')">📋 तयार PDF लॉग</button>
+    <button class="nav-item-btn hidden-role" id="navPwdReq" onclick="switchView('pwdReq')">🔑 पासवर्ड रिक्वेस्ट्स</button>
     <button class="nav-item-btn hidden-role" id="navUsers" onclick="switchView('users')">👥 युझर मॅनेजमेंट</button>
     <button class="nav-item-btn hidden-role" id="navTalukaCfg" onclick="switchView('talukaCfg')">🗂️ तालुका Sheet / Folder सेटिंग्ज</button>
   </nav>
@@ -206,14 +270,20 @@
 <main>
   <div id="msg"></div>
 
-  <!-- INSTALL-ONLY GATE VIEW -->
+  <!-- INSTALL-ONLY GATE VIEW WITH INSTALLATION ANIMATION -->
   <section id="installGateView" style="display:none;">
-    <div class="install-box">
-      <img src="icons/android/launchericon-192x192.png" alt="विहिरीचे अंदाजपत्रक" class="install-logo">
-      <h2 style="border:none;margin:0 0 8px;font-size:18px;">ॲप इंस्टॉल करणे आवश्यक आहे</h2>
-      <p style="margin:0;color:#384250;font-size:14.5px;">
-        हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम डिव्हाइसवर <strong>इंस्टॉल (Install App / Add to Home Screen)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.
+    <div id="installCardInner" class="install-box">
+      <div class="install-logo-wrap">
+        <div class="install-ring"></div>
+        <img src="icons/android/launchericon-192x192.png" alt="विहिरीचे अंदाजपत्रक" class="install-logo">
+      </div>
+      <h2 id="installTitle" style="border:none;margin:0 0 8px;font-size:18px;">ॲप इंस्टॉल करणे आवश्यक आहे</h2>
+      <p id="installDesc" style="margin:0;color:#384250;font-size:14.5px;">
+        हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम डिव्हाइसवर <strong>इंस्टॉल (Install App)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.
       </p>
+      <div class="install-progress-track">
+        <div class="install-progress-bar"></div>
+      </div>
       <div class="install-actions">
         <button id="btnInstallApp" class="btn btn-success" type="button" style="display:none;padding:13px;" onclick="triggerInstall()">
           📲 ॲप इंस्टॉल करा
@@ -237,11 +307,17 @@
     <div class="grid">
       <div class="full">
         <label>नवीन पासवर्ड (किमान ४ अक्षरे) <span class="req">*</span></label>
-        <input id="newPwd1" type="password" placeholder="नवीन पासवर्ड टाका">
+        <div class="pwd-wrap">
+          <input id="newPwd1" type="password" placeholder="नवीन पासवर्ड टाका">
+          <button type="button" class="pwd-eye-btn" onclick="toggleEye('newPwd1', this)" title="पासवर्ड पहा">👁️</button>
+        </div>
       </div>
       <div class="full">
         <label>नवीन पासवर्ड पुन्हा टाका <span class="req">*</span></label>
-        <input id="newPwd2" type="password" placeholder="पासवर्डची पुष्टी करा">
+        <div class="pwd-wrap">
+          <input id="newPwd2" type="password" placeholder="पासवर्डची पुष्टी करा">
+          <button type="button" class="pwd-eye-btn" onclick="toggleEye('newPwd2', this)" title="पासवर्ड पहा">👁️</button>
+        </div>
       </div>
       <div class="full">
         <button id="btnSaveNewPwd" class="btn btn-success" type="button" style="width:100%;padding:12px;" onclick="submitNewPassword()">
@@ -251,23 +327,34 @@
     </div>
   </section>
 
-  <!-- LOGIN VIEW -->
+  <!-- LOGIN VIEW (ICON TOP + LOGIN FIELDS BELOW + EYE + FORGOT PASSWORD REQUEST) -->
   <section id="loginView" style="display:none;">
-    <h2>अधिकृत लॉगिन (मोबाईल नंबर किंवा ईमेल)</h2>
+    <div class="login-hero">
+      <img src="icons/android/launchericon-192x192.png" alt="विहिरीचे अंदाजपत्रक">
+      <div class="lh-title">विहिरीचे अंदाजपत्रक – SCP</div>
+      <div class="lh-sub">जिल्हा परिषद वाशिम · कृषी विभाग</div>
+    </div>
+
+    <h2>अधिकृत लॉगिन</h2>
     <div class="grid">
       <div class="full">
         <label>मोबाईल नंबर किंवा ईमेल आयडी <span class="req">*</span></label>
-        <input id="loginId" type="text" autocomplete="username" placeholder="उदा. 98xxxxxxxx किंवा name@example.com">
+        <input id="loginId" type="text" autocomplete="username" placeholder="उदा. 7588008578 किंवा email@domain.com">
       </div>
       <div class="full">
         <label>पासवर्ड <span class="req">*</span></label>
-        <input id="loginPwd" type="password" autocomplete="current-password" placeholder="पासवर्ड टाका">
+        <div class="pwd-wrap">
+          <input id="loginPwd" type="password" autocomplete="current-password" placeholder="पासवर्ड टाका">
+          <button type="button" class="pwd-eye-btn" onclick="toggleEye('loginPwd', this)" title="पासवर्ड पहा">👁️</button>
+        </div>
       </div>
-      <div class="full">
+      <div class="full" style="display:flex;flex-direction:column;gap:8px;">
         <button id="btnLogin" class="btn btn-primary" type="button" style="width:100%;padding:12px;" onclick="doLogin()">लॉगिन करा</button>
+        <button id="btnForgotReq" class="btn btn-secondary" type="button" style="width:100%;padding:10px;" onclick="sendForgotPasswordRequest()">
+          पासवर्ड विसरल्यास रिक्वेस्ट
+        </button>
       </div>
     </div>
-    <p class="hint">टीप: पहिल्यांदा लॉगिन करताना डीफॉल्ट पासवर्ड टाकल्यावर नवीन पासवर्ड सेट करावा लागेल.</p>
   </section>
 
   <!-- ESTIMATE FORM VIEW -->
@@ -391,6 +478,24 @@
     </div>
   </section>
 
+  <!-- PASSWORD REQUESTS VIEW (ADMIN / SUPERADMIN) -->
+  <section id="pwdReqView" style="display:none;">
+    <h2>पासवर्ड रिसेट रिक्वेस्ट्स (Admin / SuperAdmin)</h2>
+    <div style="margin-bottom:12px;">
+      <button class="btn btn-secondary btn-sm" type="button" onclick="loadPwdRequests()">रिफ्रेश करा</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data-tbl">
+        <thead>
+          <tr>
+            <th>वेळ</th><th>युजर</th><th>मोबाईल / ईमेल</th><th>तालुका</th><th>स्थिती</th><th>कृती</th>
+          </tr>
+        </thead>
+        <tbody id="pwdReqBody"></tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- USER MANAGEMENT VIEW (ADMIN / SUPERADMIN) -->
   <section id="usersView" style="display:none;">
     <h2>युझर मॅनेजमेंट (नवीन युझर / बदली / अतिरिक्त पदभार / Status / Default Password Reset)</h2>
@@ -474,6 +579,18 @@ var STATE = {
 
 var deferredInstallPrompt = null;
 
+function toggleEye(inputId, btnEl) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btnEl.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btnEl.textContent = '👁️';
+  }
+}
+
 function isStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -488,21 +605,52 @@ window.addEventListener('beforeinstallprompt', function (e) {
 window.addEventListener('appinstalled', function () {
   localStorage.setItem('wsm_installed_flag', '1');
   deferredInstallPrompt = null;
+  setInstallingAnimation(false);
   routeEntryScreen();
 });
+
+function setInstallingAnimation(active) {
+  var card = document.getElementById('installCardInner');
+  var title = document.getElementById('installTitle');
+  var desc = document.getElementById('installDesc');
+  var btnInst = document.getElementById('btnInstallApp');
+  var btnChk = document.getElementById('btnCheckInstalled');
+
+  if (active) {
+    card.classList.add('installing-active');
+    title.textContent = 'ॲप इंस्टॉलेशन प्रक्रिया सुरू आहे…';
+    desc.textContent = 'कृपया काही सेकंद थांबा; डिव्हाइसवर ॲप सेटअप होत आहे.';
+    if (btnInst) btnInst.disabled = true;
+    if (btnChk) btnChk.disabled = true;
+  } else {
+    card.classList.remove('installing-active');
+    title.textContent = 'ॲप इंस्टॉल करणे आवश्यक आहे';
+    desc.innerHTML = 'हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम डिव्हाइसवर <strong>इंस्टॉल (Install App)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.';
+    if (btnInst) btnInst.disabled = false;
+    if (btnChk) btnChk.disabled = false;
+  }
+}
 
 function triggerInstall() {
   if (!deferredInstallPrompt) {
     alert('कृपया ब्राउझरच्या ⋮ (मेन्यू) मधून "Install app" किंवा "Add to Home screen" निवडा.');
     return;
   }
+  setInstallingAnimation(true);
   deferredInstallPrompt.prompt();
   deferredInstallPrompt.userChoice.then(function (choice) {
+    deferredInstallPrompt = null;
     if (choice.outcome === 'accepted') {
       localStorage.setItem('wsm_installed_flag', '1');
-      routeEntryScreen();
+      setTimeout(function () {
+        setInstallingAnimation(false);
+        routeEntryScreen();
+      }, 1200);
+    } else {
+      setInstallingAnimation(false);
     }
-    deferredInstallPrompt = null;
+  }).catch(function () {
+    setInstallingAnimation(false);
   });
 }
 
@@ -516,7 +664,7 @@ function checkInstalledAndProceed() {
 }
 
 function routeEntryScreen() {
-  ['installGateView', 'loginView', 'forcePwdView', 'estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+  ['installGateView', 'loginView', 'forcePwdView', 'estimateView', 'logsView', 'pwdReqView', 'usersView', 'talukaCfgView'].forEach(function (id) {
     document.getElementById(id).style.display = 'none';
   });
 
@@ -629,8 +777,36 @@ function doLogin() {
     });
 }
 
+function sendForgotPasswordRequest() {
+  var loginId = document.getElementById('loginId').value.trim();
+  hideMsg();
+  if (!loginId) {
+    showMsg('err', 'पासवर्ड विसरल्यास रिक्वेस्ट पाठवण्यापूर्वी कृपया मोबाईल नंबर किंवा ईमेल आयडी टाका.');
+    return;
+  }
+  var btn = document.getElementById('btnForgotReq');
+  btn.disabled = true;
+  btn.textContent = 'रिक्वेस्ट पाठवत आहे…';
+
+  apiPost({ action: 'requestPasswordReset', loginId: loginId })
+    .then(function (res) {
+      btn.disabled = false;
+      btn.textContent = 'पासवर्ड विसरल्यास रिक्वेस्ट';
+      if (!res.ok) {
+        showMsg('err', res.error || 'रिक्वेस्ट पाठवता आली नाही.');
+        return;
+      }
+      showMsg('ok', res.message);
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'पासवर्ड विसरल्यास रिक्वेस्ट';
+      showMsg('err', err.message || String(err));
+    });
+}
+
 function showForceChangePwdScreen() {
-  ['installGateView', 'loginView', 'estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+  ['installGateView', 'loginView', 'estimateView', 'logsView', 'pwdReqView', 'usersView', 'talukaCfgView'].forEach(function (id) {
     document.getElementById(id).style.display = 'none';
   });
   document.getElementById('btnMenu').style.display = 'none';
@@ -698,6 +874,7 @@ function enterApp() {
   var roleClean = String(u.role || '').trim().toLowerCase();
   var isAdmin = (roleClean === 'admin' || roleClean === 'superadmin');
   var isSuper = (roleClean === 'superadmin');
+  document.getElementById('navPwdReq').classList.toggle('hidden-role', !isAdmin);
   document.getElementById('navUsers').classList.toggle('hidden-role', !isAdmin);
   document.getElementById('navTalukaCfg').classList.toggle('hidden-role', !isSuper);
 
@@ -714,7 +891,7 @@ function logout() {
   document.getElementById('btnLogout').style.display = 'none';
   document.getElementById('btnMenu').style.display = 'none';
   document.getElementById('hdrSub').textContent = 'जिल्हा परिषद वाशिम · कृषी विभाग';
-  ['estimateView', 'logsView', 'usersView', 'talukaCfgView', 'forcePwdView'].forEach(function (id) {
+  ['estimateView', 'logsView', 'pwdReqView', 'usersView', 'talukaCfgView', 'forcePwdView'].forEach(function (id) {
     document.getElementById(id).style.display = 'none';
   });
   document.getElementById('loginPwd').value = '';
@@ -725,7 +902,7 @@ function logout() {
 function switchView(viewName) {
   toggleDrawer(false);
   hideMsg();
-  ['estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+  ['estimateView', 'logsView', 'pwdReqView', 'usersView', 'talukaCfgView'].forEach(function (id) {
     document.getElementById(id).style.display = 'none';
   });
   document.querySelectorAll('.nav-item-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -737,6 +914,10 @@ function switchView(viewName) {
     document.getElementById('logsView').style.display = 'block';
     document.getElementById('navLogs').classList.add('active');
     loadLogs();
+  } else if (viewName === 'pwdReq') {
+    document.getElementById('pwdReqView').style.display = 'block';
+    document.getElementById('navPwdReq').classList.add('active');
+    loadPwdRequests();
   } else if (viewName === 'users') {
     document.getElementById('usersView').style.display = 'block';
     document.getElementById('navUsers').classList.add('active');
@@ -966,6 +1147,42 @@ function loadLogs() {
         tb.appendChild(tr);
       });
     });
+}
+
+/* ---------- PASSWORD REQUESTS (ADMIN / SUPERADMIN) ---------- */
+function loadPwdRequests() {
+  apiPost({ action: 'listPasswordRequests' }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    var tb = document.getElementById('pwdReqBody');
+    tb.innerHTML = '';
+    if (!res.requests || !res.requests.length) {
+      tb.innerHTML = '<tr><td colspan="6">कोणतीही पासवर्ड रिक्वेस्ट आढळली नाही.</td></tr>';
+      return;
+    }
+    res.requests.forEach(function (q) {
+      var isPend = (q.status === 'Pending');
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + esc(q.requestedAt) + '<br><small>' + esc(q.requestId) + '</small></td>' +
+        '<td><strong>' + esc(q.fullName) + '</strong><br><small>' + esc(q.userId) + '</small></td>' +
+        '<td>' + esc(q.mobile) + '<br><small>' + esc(q.email) + '</small></td>' +
+        '<td>' + esc(q.taluka) + '</td>' +
+        '<td><span class="' + (isPend ? 'badge-pending' : 'badge-active') + '">' + esc(q.status) + '</span></td>' +
+        '<td>' + (isPend
+          ? '<button class="btn btn-success btn-sm" type="button" onclick="approvePwdReq(\'' + esc(q.requestId) + '\', \'' + esc(q.userId) + '\')">Approve (Default Reset)</button>'
+          : '<small>' + esc(q.actionBy || '-') + '</small>') + '</td>';
+      tb.appendChild(tr);
+    });
+  });
+}
+
+function approvePwdReq(requestId, targetUserId) {
+  if (!confirm('ही पासवर्ड रिक्वेस्ट मंजूर करून पासवर्ड डीफॉल्टवर रिसेट करायचा का?')) return;
+  apiPost({ action: 'approvePasswordRequest', requestId: requestId, targetUserId: targetUserId }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    showMsg('ok', res.message);
+    loadPwdRequests();
+  });
 }
 
 /* ---------- USER MANAGEMENT ---------- */
