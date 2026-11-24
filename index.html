@@ -6,9 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f4e79">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48x48.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
-<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/ios/32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/android/launchericon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/android/launchericon-192x192.png">
+<link rel="apple-touch-icon" sizes="60x60" href="icons/ios/60.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/ios/180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/android/launchericon-192x192.png">
 <title>विहिरीचे अंदाजपत्रक – SCP</title>
 <style>
   * { box-sizing: border-box; }
@@ -174,7 +177,7 @@
 
 <header>
   <div class="hdr-left">
-    <img src="icons/icon-72x72.png" alt="Logo" class="brand-logo">
+    <img src="icons/android/launchericon-72x72.png" alt="Logo" class="brand-logo">
     <button id="btnMenu" type="button" onclick="toggleDrawer(true)">&#9776;</button>
     <div>
       <h1>विहिरीचे अंदाजपत्रक – SCP</h1>
@@ -203,13 +206,13 @@
 <main>
   <div id="msg"></div>
 
-  <!-- INSTALL-ONLY GATE VIEW (ब्राउझरमधून थेट वापर रोखण्यासाठी) -->
+  <!-- INSTALL-ONLY GATE VIEW -->
   <section id="installGateView" style="display:none;">
     <div class="install-box">
-      <img src="icons/icon-192x192.png" alt="विहिरीचे अंदाजपत्रक" class="install-logo">
+      <img src="icons/android/launchericon-192x192.png" alt="विहिरीचे अंदाजपत्रक" class="install-logo">
       <h2 style="border:none;margin:0 0 8px;font-size:18px;">ॲप इंस्टॉल करणे आवश्यक आहे</h2>
       <p style="margin:0;color:#384250;font-size:14.5px;">
-        हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम मोबाईल/डिव्हाइसवर <strong>इंस्टॉल (Add to Home Screen / Install App)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.
+        हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम डिव्हाइसवर <strong>इंस्टॉल (Install App / Add to Home Screen)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.
       </p>
       <div class="install-actions">
         <button id="btnInstallApp" class="btn btn-success" type="button" style="display:none;padding:13px;" onclick="triggerInstall()">
@@ -225,7 +228,7 @@
     </div>
   </section>
 
-  <!-- FORCE CHANGE PASSWORD VIEW (पहिल्या लॉगिनला किंवा रिसेट नंतर) -->
+  <!-- FORCE CHANGE PASSWORD VIEW -->
   <section id="forcePwdView" style="display:none;">
     <h2>नवीन पासवर्ड सेट करणे अनिवार्य आहे</h2>
     <p class="hint" style="margin-bottom:12px;color:#92241b;font-weight:600;">
