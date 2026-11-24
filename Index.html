@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f4e79">
+<link rel="manifest" href="manifest.json">
+<title>अंदाजपत्रक – नविन विहीर (Multi-Taluka PWA)</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --primary: #1f4e79;
+    --primary-dark: #153654;
+    --accent: #2e7d32;
+    --danger: #c0392b;
+    --bg: #f2f4f7;
+    --card: #ffffff;
+    --text: #16202a;
+    --muted: #6b7785;
+    --border: #cfd6de;
+  }
+  body {
+    margin: 0; padding: 0 0 96px; background: var(--bg); color: var(--text);
+    font-family: "Nirmala UI", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.45;
+  }
+  header {
+    background: var(--primary); color: #fff; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .hdr-left { display: flex; align-items: center; gap: 12px; }
+  #btnMenu {
+    background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3);
+    border-radius: 7px; padding: 7px 11px; font-size: 18px; cursor: pointer; display: none;
+  }
+  header h1 { margin: 0; font-size: 16.5px; font-weight: 700; }
+  header p { margin: 2px 0 0; font-size: 12px; opacity: .88; }
+  #btnLogout {
+    background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 7px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: none;
+  }
+
+  /* Side Drawer Menu */
+  #drawerBackdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200;
+  }
+  #drawerBackdrop.open { display: block; }
+  #sideDrawer {
+    position: fixed; top: 0; left: -290px; width: 280px; height: 100%;
+    background: #fff; z-index: 210; transition: left .25s ease;
+    box-shadow: 4px 0 18px rgba(0,0,0,.2); display: flex; flex-direction: column;
+  }
+  #sideDrawer.open { left: 0; }
+  .drawer-head {
+    background: var(--primary); color: #fff; padding: 18px 16px;
+  }
+  .drawer-head .u-name { font-weight: 700; font-size: 15.5px; }
+  .drawer-head .u-meta { font-size: 12px; opacity: .85; margin-top: 3px; }
+  .drawer-badge {
+    display: inline-block; margin-top: 6px; background: #ffd54f; color: #16202a;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  }
+  .drawer-nav { padding: 10px 0; flex: 1; overflow-y: auto; }
+  .nav-item-btn {
+    width: 100%; text-align: left; background: none; border: none;
+    padding: 12px 18px; font-size: 14.5px; font-weight: 600; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; gap: 10px;
+  }
+  .nav-item-btn:hover { background: #f0f4f8; }
+  .nav-item-btn.active { background: #e3eef9; color: var(--primary); border-right: 4px solid var(--primary); }
+  .nav-item-btn.hidden-role { display: none; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 14px; }
+  section {
+    background: var(--card); border-radius: 10px; padding: 14px 16px 18px;
+    margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.07);
+  }
+  section h2 {
+    margin: 0 0 12px; font-size: 14px; color: var(--primary); font-weight: 700;
+    border-bottom: 1px solid #e6eaee; padding-bottom: 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #384250; margin-bottom: 4px; }
+  label .req { color: var(--danger); }
+  .cellref {
+    float: right; font-size: 11px; font-weight: 600; color: #8a96a3;
+    background: #f0f3f6; border-radius: 4px; padding: 1px 6px;
+  }
+  input, select, textarea {
+    width: 100%; padding: 10px 11px; font-size: 15px; font-family: inherit;
+    border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(31,78,121,.12);
+  }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+  table.lead, table.data-tbl { width: 100%; border-collapse: collapse; }
+  table.lead th, table.data-tbl th {
+    font-size: 12px; text-align: left; color: #475569; font-weight: 700;
+    padding: 8px 6px; border-bottom: 2px solid #e2e8f0; background: #f8fafc;
+  }
+  table.lead td, table.data-tbl td {
+    padding: 6px; vertical-align: middle; border-bottom: 1px solid #eef2f6; font-size: 13px;
+  }
+  table.lead td.item { font-size: 13.5px; font-weight: 600; width: 34%; }
+  table.lead td.cell { font-size: 11px; color: #8a96a3; width: 1%; white-space: nowrap; }
+  .tbl-wrap { overflow-x: auto; }
+
+  .btn {
+    padding: 10px 14px; font-size: 14px; font-weight: 700; border: none;
+    border-radius: 8px; font-family: inherit; cursor: pointer;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:disabled { background: #9fb3c6; cursor: not-allowed; }
+  .btn-success { background: var(--accent); color: #fff; }
+  .btn-secondary { background: #eef1f5; color: #384250; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+
+  footer.action-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: #fff;
+    border-top: 1px solid #dfe4ea; padding: 10px 14px; display: flex; gap: 10px;
+    max-width: 860px; margin: 0 auto; z-index: 40;
+  }
+  footer.action-bar #btnClear { flex: 0 0 115px; }
+  footer.action-bar #btnPdf { flex: 1; padding: 13px; font-size: 15.5px; }
+
+  #msg {
+    display: none; margin: 0 0 14px; padding: 13px 15px; border-radius: 9px;
+    font-size: 14px; white-space: pre-wrap;
+  }
+  #msg.ok { display: block; background: #e7f6ec; color: #1e6b36; border: 1px solid #b7e0c4; }
+  #msg.err { display: block; background: #fdeceb; color: #92241b; border: 1px solid #f5c2bd; }
+  #msg a { color: var(--primary); font-weight: 700; }
+  #msg .note { display: block; margin-top: 8px; font-size: 12.5px; color: #8a5a00; }
+
+  .badge-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
+  .badge-inactive { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
+  .row-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* QR Scanner Overlay */
+  #qrOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.86);
+    z-index: 300; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
+  }
+  #qrReaderBox { width: 92%; max-width: 440px; background: #fff; padding: 14px; border-radius: 10px; }
+  #qrStatusText { color: #ffd54f; font-size: 13px; margin-top: 10px; text-align: center; max-width: 440px; }
+
+  @media (max-width: 580px) {
+    .grid { grid-template-columns: 1fr; }
+    table.lead td.item { width: 38%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    <button id="btnMenu" type="button" onclick="toggleDrawer(true)">&#9776;</button>
+    <div>
+      <h1>अंदाजपत्रक – नविन विहीर (SCP)</h1>
+      <p id="hdrSub">जिल्हा परिषद वाशिम · कृषी विभाग</p>
+    </div>
+  </div>
+  <button id="btnLogout" type="button" onclick="logout()">बाहेर पडा</button>
+</header>
+
+<!-- Side Menu Drawer -->
+<div id="drawerBackdrop" onclick="toggleDrawer(false)"></div>
+<aside id="sideDrawer">
+  <div class="drawer-head">
+    <div class="u-name" id="dUserName">वापरकर्ता</div>
+    <div class="u-meta" id="dUserContact"></div>
+    <span class="drawer-badge" id="dUserRole">Role</span>
+  </div>
+  <nav class="drawer-nav">
+    <button class="nav-item-btn active" id="navEstimate" onclick="switchView('estimate')">📝 अंदाजपत्रक तयार करा</button>
+    <button class="nav-item-btn" id="navLogs" onclick="switchView('logs')">📋 तयार PDF लॉग</button>
+    <button class="nav-item-btn hidden-role" id="navUsers" onclick="switchView('users')">👥 युझर मॅनेजमेंट</button>
+    <button class="nav-item-btn hidden-role" id="navTalukaCfg" onclick="switchView('talukaCfg')">🗂️ तालुका Sheet / Folder सेटिंग्ज</button>
+  </nav>
+</aside>
+
+<main>
+  <div id="msg"></div>
+
+  <!-- LOGIN VIEW -->
+  <section id="loginView">
+    <h2>अधिकृत लॉगिन (मोबाईल नंबर किंवा ईमेल)</h2>
+    <div class="grid">
+      <div class="full">
+        <label>मोबाईल नंबर किंवा ईमेल आयडी <span class="req">*</span></label>
+        <input id="loginId" type="text" autocomplete="username" placeholder="उदा. 98xxxxxxxx किंवा name@example.com">
+      </div>
+      <div class="full">
+        <label>पासवर्ड <span class="req">*</span></label>
+        <input id="loginPwd" type="password" autocomplete="current-password" placeholder="पासवर्ड टाका">
+      </div>
+      <div class="full">
+        <button id="btnLogin" class="btn btn-primary" type="button" style="width:100%;padding:12px;" onclick="doLogin()">लॉगिन करा</button>
+      </div>
+    </div>
+    <p class="hint">टीप: खाते Active असल्यासच लॉगिन होईल. बदली, अतिरिक्त पदभार किंवा पासवर्ड रिसेटसाठी Admin / SuperAdmin मेन्यू वापरा.</p>
+  </section>
+
+  <!-- ESTIMATE FORM VIEW -->
+  <div id="estimateView" style="display:none;">
+    <section>
+      <h2>तालुका निवड व कामाची माहिती</h2>
+      <div class="grid">
+        <div>
+          <label>Taluka <span class="req">*</span><span class="cellref">C6</span></label>
+          <select id="taluka" onchange="onTalukaChanged()"></select>
+        </div>
+        <div>
+          <label>Panchayat Samiti <span class="req">*</span><span class="cellref">C7</span></label>
+          <select id="panchayat"></select>
+        </div>
+        <div class="full">
+          <label>Application ID <span class="req">*</span><span class="cellref">C1</span></label>
+          <input id="appId" type="text" autocomplete="off" placeholder="उदा. WS26-27...">
+        </div>
+        <div class="full">
+          <label>Beneficiary Name <span class="req">*</span><span class="cellref">C2</span></label>
+          <input id="beneficiary" type="text" autocomplete="off">
+        </div>
+        <div>
+          <label>Contact No. <span class="req">*</span><span class="cellref">C3</span></label>
+          <input id="contact" type="tel" inputmode="numeric" maxlength="10" autocomplete="off">
+        </div>
+        <div>
+          <label>Village Name <span class="req">*</span><span class="cellref">C4</span></label>
+          <input id="village" type="text" autocomplete="off">
+        </div>
+        <div>
+          <label>Shivar of work <span class="req">*</span><span class="cellref">C5</span></label>
+          <input id="shivar" type="text" autocomplete="off">
+        </div>
+        <div>
+          <label>Gat no/ Survey No <span class="req">*</span><span class="cellref">C8</span></label>
+          <input id="gat" type="text" autocomplete="off">
+        </div>
+        <div>
+          <label>8a Area (Ha.) <span class="req">*</span><span class="cellref">C9</span></label>
+          <input id="area" type="number" step="0.0001" min="0" inputmode="decimal">
+        </div>
+        <div class="full">
+          <label>Name of scheme <span class="req">*</span><span class="cellref">C10</span></label>
+          <select id="scheme"></select>
+        </div>
+        <div>
+          <label>Year of Selection <span class="req">*</span><span class="cellref">C11</span></label>
+          <select id="year"></select>
+        </div>
+        <div>
+          <label>Name of AO(SCP) <span class="cellref">C13</span></label>
+          <input id="ao" type="text" autocomplete="off">
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Lead Statement – साहित्य स्त्रोत व अंतर</h2>
+      <table class="lead">
+        <tr>
+          <th>Item</th>
+          <th>Source Of Material (Village Name)</th>
+          <th>Distance (Km)</th>
+          <th></th>
+        </tr>
+        <tbody id="leadBody"></tbody>
+      </table>
+      <p class="hint">अंतर ठरलेल्या यादीतूनच निवडा – दर त्या तक्त्यातूनच घेतले जातात.</p>
+    </section>
+
+    <section>
+      <h2>मंजुर बाब</h2>
+      <div class="grid">
+        <div class="full">
+          <label>मंजुर बाब <span class="req">*</span><span class="cellref">QR मध्ये</span></label>
+          <select id="sanctionItem"></select>
+        </div>
+      </div>
+      <p class="hint">ही निवड अंदाजपत्रकात छापली जात नाही – फक्त QR कोडमध्ये जाते.</p>
+    </section>
+
+    <footer class="action-bar">
+      <button id="btnClear" class="btn btn-secondary" type="button" onclick="clearForm()">रिकामा करा</button>
+      <button id="btnPdf" class="btn btn-primary" type="button" onclick="onPdf()">PDF तयार करा</button>
+    </footer>
+  </div>
+
+  <!-- LOGS VIEW -->
+  <section id="logsView" style="display:none;">
+    <h2>तयार झालेल्या PDF अंदाजपत्रकांचा लॉग</h2>
+    <div class="grid" style="margin-bottom:12px;">
+      <div>
+        <label>तालुका फिल्टर</label>
+        <select id="logTalukaFilter" onchange="loadLogs()"></select>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <button class="btn btn-secondary" type="button" onclick="loadLogs()">रिफ्रेश करा</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data-tbl">
+        <thead>
+          <tr>
+            <th>वेळ</th><th>तालुका</th><th>App ID</th><th>लाभार्थी</th><th>रक्कम</th><th>तयार करणारे</th><th>PDF</th>
+          </tr>
+        </thead>
+        <tbody id="logsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- USER MANAGEMENT VIEW (ADMIN / SUPERADMIN) -->
+  <section id="usersView" style="display:none;">
+    <h2>युझर मॅनेजमेंट (नवीन युझर / बदली / अतिरिक्त पदभार / Status / Password Reset)</h2>
+    <form id="userForm" onsubmit="saveUser(event)" style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #e2e8f0;">
+      <div class="grid">
+        <div>
+          <label>User ID (नवीनसाठी रिकामे ठेवा)</label>
+          <input id="uId" type="text" readonly placeholder="Auto">
+        </div>
+        <div>
+          <label>पूर्ण नाव (AO / वापरकर्ता) <span class="req">*</span></label>
+          <input id="uName" type="text" required placeholder="अधिकाऱ्याचे नाव">
+        </div>
+        <div>
+          <label>मोबाईल नंबर <span class="req">*</span></label>
+          <input id="uMobile" type="tel" maxlength="10" placeholder="10 अंकी मोबाईल">
+        </div>
+        <div>
+          <label>ईमेल आयडी <span class="req">*</span></label>
+          <input id="uEmail" type="email" placeholder="name@domain.com">
+        </div>
+        <div>
+          <label>Role <span class="req">*</span></label>
+          <select id="uRole">
+            <option value="TalukaUser">TalukaUser</option>
+            <option value="Admin">Admin</option>
+            <option value="SuperAdmin">SuperAdmin</option>
+          </select>
+        </div>
+        <div>
+          <label>Status <span class="req">*</span></label>
+          <select id="uStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div>
+          <label>मूळ तालुका (Primary Taluka / बदली) <span class="req">*</span></label>
+          <select id="uPrimaryTaluka"></select>
+        </div>
+        <div>
+          <label>अतिरिक्त पदभार तालुके (स्वल्पविरामाने)</label>
+          <input id="uExtraTalukas" type="text" placeholder="उदा. Malegaon,Risod">
+        </div>
+        <div class="full">
+          <label>पासवर्ड (नवीन युझरसाठी किंवा बदलण्यासाठी टाका)</label>
+          <input id="uPassword" type="text" placeholder="नवीन/सध्याचा पासवर्ड">
+        </div>
+        <div class="full" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success" type="submit">युझर जतन / अपडेट करा</button>
+          <button class="btn btn-secondary" type="button" onclick="resetUserForm()">फॉर्म साफ करा</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="tbl-wrap">
+      <table class="data-tbl">
+        <thead>
+          <tr>
+            <th>नाव</th><th>मोबाईल / ईमेल</th><th>Role</th><th>मूळ तालुका</th><th>अतिरिक्त तालुके</th><th>Status</th><th>कृती</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TALUKA SHEET & FOLDER CONFIG VIEW (SUPERADMIN ONLY) -->
+  <section id="talukaCfgView" style="display:none;">
+    <h2>तालुका निहाय Google Sheet ID, Drive Folder ID व AO सेटिंग्ज (SuperAdmin)</h2>
+    <p class="hint" style="margin-bottom:12px;">प्रत्येक तालुक्याची शीट व फोल्डर मुख्य Apps Script अकाउंटसोबत Editor म्हणून शेअर केलेला असावा.</p>
+    <div id="talukaCfgList"></div>
+  </section>
+</main>
+
+<!-- QR Overlay (Optional helper if needed) -->
+<div id="qrOverlay">
+  <div id="qrReaderBox"></div>
+  <div id="qrStatusText"></div>
+  <button class="btn btn-danger btn-sm" style="margin-top:14px;" onclick="stopQr()">बंद करा</button>
+</div>
+
+<script>
+// 🔴 येथे तुमच्या Deployed Google Apps Script Web App ची /exec URL टाका 🔴
+var API_URL = 'https://script.google.com/macros/s/AKfycbywppeEPzjaYbCEKa5_U44OYkFT159Zcarft1gRTXXyED--ZweJau698GW_eIwRpQcKKg/exec';
+
+var STATE = {
+  token: '',
+  user: null,
+  boot: null,
+  users: []
+};
+
+function apiPost(payload) {
+  if (!API_URL || API_URL.indexOf('YOUR_DEPLOYMENT_ID') !== -1) {
+    return Promise.reject(new Error('कृपया index.html मधील API_URL मध्ये तुमची Apps Script /exec लिंक टाका.'));
+  }
+  if (STATE.token && !payload.auth) {
+    payload.auth = { token: STATE.token };
+  }
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function (r) { return r.json(); });
+}
+
+function showMsg(kind, html) {
+  var m = document.getElementById('msg');
+  m.className = kind;
+  m.innerHTML = html;
+}
+
+function hideMsg() {
+  var m = document.getElementById('msg');
+  m.className = '';
+  m.innerHTML = '';
+}
+
+function toggleDrawer(open) {
+  document.getElementById('sideDrawer').classList.toggle('open', open);
+  document.getElementById('drawerBackdrop').classList.toggle('open', open);
+}
+
+function doLogin() {
+  var loginId = document.getElementById('loginId').value.trim();
+  var password = document.getElementById('loginPwd').value;
+  var btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.textContent = 'तपासत आहे…';
+  hideMsg();
+
+  apiPost({ action: 'login', loginId: loginId, password: password })
+    .then(function (res) {
+      btn.disabled = false;
+      btn.textContent = 'लॉगिन करा';
+      if (!res.ok) {
+        showMsg('err', res.error || 'लॉगिन अयशस्वी.');
+        return;
+      }
+      STATE.token = res.token;
+      STATE.user = res.user;
+      STATE.boot = res.boot;
+      sessionStorage.setItem('wsm_sess', JSON.stringify({ token: res.token, user: res.user, boot: res.boot }));
+      enterApp();
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'लॉगिन करा';
+      showMsg('err', err.message || String(err));
+    });
+}
+
+function enterApp() {
+  var u = STATE.user;
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  document.getElementById('btnMenu').style.display = 'inline-block';
+  document.getElementById('hdrSub').textContent = u.fullName + ' (' + u.role + ')';
+
+  document.getElementById('dUserName').textContent = u.fullName;
+  document.getElementById('dUserContact').textContent = [u.mobile, u.email].filter(Boolean).join(' · ');
+  document.getElementById('dUserRole').textContent = u.role;
+
+  var isAdmin = (u.role === 'Admin' || u.role === 'SuperAdmin');
+  var isSuper = (u.role === 'SuperAdmin');
+  document.getElementById('navUsers').classList.toggle('hidden-role', !isAdmin);
+  document.getElementById('navTalukaCfg').classList.toggle('hidden-role', !isSuper);
+
+  initEstimateForm();
+  switchView('estimate');
+}
+
+function logout() {
+  sessionStorage.removeItem('wsm_sess');
+  STATE.token = '';
+  STATE.user = null;
+  STATE.boot = null;
+  toggleDrawer(false);
+  document.getElementById('btnLogout').style.display = 'none';
+  document.getElementById('btnMenu').style.display = 'none';
+  document.getElementById('hdrSub').textContent = 'जिल्हा परिषद वाशिम · कृषी विभाग';
+  ['estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('loginView').style.display = 'block';
+  document.getElementById('loginPwd').value = '';
+  hideMsg();
+}
+
+function switchView(viewName) {
+  toggleDrawer(false);
+  hideMsg();
+  ['estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.querySelectorAll('.nav-item-btn').forEach(function (b) { b.classList.remove('active'); });
+
+  if (viewName === 'estimate') {
+    document.getElementById('estimateView').style.display = 'block';
+    document.getElementById('navEstimate').classList.add('active');
+  } else if (viewName === 'logs') {
+    document.getElementById('logsView').style.display = 'block';
+    document.getElementById('navLogs').classList.add('active');
+    loadLogs();
+  } else if (viewName === 'users') {
+    document.getElementById('usersView').style.display = 'block';
+    document.getElementById('navUsers').classList.add('active');
+    loadUsers();
+  } else if (viewName === 'talukaCfg') {
+    document.getElementById('talukaCfgView').style.display = 'block';
+    document.getElementById('navTalukaCfg').classList.add('active');
+    loadTalukaConfigs();
+  }
+}
+
+function fillSelect(el, list, chosen) {
+  el.innerHTML = '';
+  list.forEach(function (v) {
+    var o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    if (v === chosen) o.selected = true;
+    el.appendChild(o);
+  });
+}
+
+function initEstimateForm() {
+  var b = STATE.boot;
+  var allowed = b.allowedTalukas || b.blocks;
+  var defTaluka = b.defaultTaluka || allowed[0];
+
+  fillSelect(document.getElementById('taluka'), allowed, defTaluka);
+  fillSelect(document.getElementById('panchayat'), b.blocks, defTaluka);
+  fillSelect(document.getElementById('scheme'), b.schemes, b.schemes[0]);
+  fillSelect(document.getElementById('year'), b.years, b.years[2] || b.years[0]);
+  fillSelect(document.getElementById('sanctionItem'), b.sanctionItems, b.sanctionItems[0]);
+
+  var body = document.getElementById('leadBody');
+  body.innerHTML = '';
+  var cells = [['C18', 'D18'], ['C19', 'D19'], ['C20', 'D20'], ['C21', 'D21']];
+  b.materials.forEach(function (mat, i) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="item">' + mat + '</td>' +
+      '<td><input id="leadv' + i + '" type="text" autocomplete="off"></td>' +
+      '<td><select id="leadd' + i + '"></select></td>' +
+      '<td class="cell">' + cells[i][0] + '<br>' + cells[i][1] + '</td>';
+    body.appendChild(tr);
+    var sel = document.getElementById('leadd' + i);
+    fillSelect(sel, [''].concat(b.leads), '');
+    sel.options[0].textContent = '—';
+  });
+
+  onTalukaChanged();
+}
+
+function onTalukaChanged() {
+  var t = document.getElementById('taluka').value;
+  var meta = (STATE.boot && STATE.boot.talukaMeta && STATE.boot.talukaMeta[t]) || {};
+  document.getElementById('panchayat').value = meta.panchayatSamiti || t;
+  document.getElementById('ao').value = meta.defaultAo || '';
+}
+
+function collectEstimate() {
+  var lead = [];
+  for (var i = 0; i < 4; i++) {
+    lead.push({
+      village: document.getElementById('leadv' + i).value.trim(),
+      dist: document.getElementById('leadd' + i).value
+    });
+  }
+  return {
+    appId: document.getElementById('appId').value.trim(),
+    beneficiary: document.getElementById('beneficiary').value.trim(),
+    contact: document.getElementById('contact').value.trim(),
+    village: document.getElementById('village').value.trim(),
+    shivar: document.getElementById('shivar').value.trim(),
+    taluka: document.getElementById('taluka').value,
+    panchayat: document.getElementById('panchayat').value,
+    gat: document.getElementById('gat').value.trim(),
+    area: document.getElementById('area').value,
+    scheme: document.getElementById('scheme').value,
+    year: document.getElementById('year').value,
+    ao: document.getElementById('ao').value.trim(),
+    sanctionItem: document.getElementById('sanctionItem').value,
+    lead: lead
+  };
+}
+
+function onPdf() {
+  var btn = document.getElementById('btnPdf');
+  btn.disabled = true;
+  btn.textContent = 'PDF तयार होत आहे…';
+  showMsg('ok', 'कृपया थांबा – निवडलेल्या तालुक्याच्या शीटमध्ये माहिती जतन होत आहे, QR बसवला जात आहे व PDF तयार होत आहे…');
+
+  apiPost({ action: 'saveAndPdf', data: collectEstimate() })
+    .then(function (r) {
+      btn.disabled = false;
+      btn.textContent = 'PDF तयार करा';
+      if (!r.ok) {
+        showMsg('err', r.error || 'PDF तयार होऊ शकले नाही.');
+        return;
+      }
+      var note = r.qrPx < 150
+        ? '<span class="note">QR आकार: ' + r.qrPx + ' px – Front शीटमध्ये रांगा 25–29 उंच केल्यास आकार वाढेल.</span>'
+        : '<span class="note">तालुका: ' + r.taluka + ' · QR: ' + r.qrPx + ' px · ' + r.qrBytes + ' बाइट</span>';
+      showMsg('ok',
+        'अभिनंदन! PDF तयार झाले आणि QR पहिल्या पानावर बसवला.\n\n' +
+        '<a href="' + r.url + '" target="_blank">PDF उघडा / प्रिंट करा</a>\n\n' +
+        'फाइल: ' + r.name + note);
+      window.scrollTo(0, 0);
+    })
+    .catch(function (e) {
+      btn.disabled = false;
+      btn.textContent = 'PDF तयार करा';
+      showMsg('err', e.message || String(e));
+    });
+}
+
+function clearForm() {
+  if (!confirm('फॉर्ममधली माहिती रिकामी करायची?')) return;
+  ['appId', 'beneficiary', 'contact', 'village', 'shivar', 'gat', 'area']
+    .forEach(function (id) { document.getElementById(id).value = ''; });
+  for (var i = 0; i < 4; i++) {
+    document.getElementById('leadv' + i).value = '';
+    document.getElementById('leadd' + i).value = '';
+  }
+  hideMsg();
+}
+
+/* ---------- LOGS ---------- */
+function loadLogs() {
+  var allowed = (STATE.boot && STATE.boot.allowedTalukas) || [];
+  var fSel = document.getElementById('logTalukaFilter');
+  var prev = fSel.value || 'ALL';
+  fSel.innerHTML = '<option value="ALL">सर्व अनुमत तालुके</option>';
+  allowed.forEach(function (t) {
+    var o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    if (t === prev) o.selected = true;
+    fSel.appendChild(o);
+  });
+
+  apiPost({ action: 'getLogs', filters: { taluka: fSel.value } })
+    .then(function (res) {
+      if (!res.ok) { showMsg('err', res.error); return; }
+      var tb = document.getElementById('logsBody');
+      tb.innerHTML = '';
+      if (!res.logs.length) {
+        tb.innerHTML = '<tr><td colspan="7">नोंदी आढळल्या नाहीत.</td></tr>';
+        return;
+      }
+      res.logs.forEach(function (x) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + esc(x.timestamp) + '</td>' +
+          '<td>' + esc(x.taluka) + '</td>' +
+          '<td>' + esc(x.appId) + '</td>' +
+          '<td>' + esc(x.beneficiary) + '</td>' +
+          '<td>' + esc(x.amount) + '</td>' +
+          '<td>' + esc(x.createdBy) + '</td>' +
+          '<td>' + (x.pdfUrl ? '<a href="' + esc(x.pdfUrl) + '" target="_blank">उघडा</a>' : '-') + '</td>';
+        tb.appendChild(tr);
+      });
+    });
+}
+
+/* ---------- USER MANAGEMENT ---------- */
+function loadUsers() {
+  var blocks = (STATE.boot && STATE.boot.blocks) || ['Washim', 'Malegaon', 'Risod', 'Mangarulpir', 'Karanja', 'Manora'];
+  fillSelect(document.getElementById('uPrimaryTaluka'), blocks, blocks[0]);
+
+  apiPost({ action: 'listUsers' }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    STATE.users = res.users || [];
+    var tb = document.getElementById('usersBody');
+    tb.innerHTML = '';
+    STATE.users.forEach(function (u) {
+      var isAct = (u.status === 'Active');
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><strong>' + esc(u.fullName) + '</strong><br><small>' + esc(u.userId) + '</small></td>' +
+        '<td>' + esc(u.mobile) + '<br><small>' + esc(u.email) + '</small></td>' +
+        '<td>' + esc(u.role) + '</td>' +
+        '<td>' + esc(u.primaryTaluka) + '</td>' +
+        '<td>' + esc(u.extraTalukas || '-') + '</td>' +
+        '<td><span class="' + (isAct ? 'badge-active' : 'badge-inactive') + '">' + esc(u.status) + '</span></td>' +
+        '<td class="row-actions">' +
+          '<button class="btn btn-secondary btn-sm" type="button" onclick="editUser(\'' + esc(u.userId) + '\')">बदली / एडिट</button>' +
+          '<button class="btn btn-secondary btn-sm" type="button" onclick="promptResetPwd(\'' + esc(u.userId) + '\')">पासवर्ड रिसेट</button>' +
+          '<button class="btn ' + (isAct ? 'btn-danger' : 'btn-success') + ' btn-sm" type="button" onclick="toggleStatus(\'' + esc(u.userId) + '\', \'' + (isAct ? 'Inactive' : 'Active') + '\')">' +
+            (isAct ? 'Inactive करा' : 'Active करा') +
+          '</button>' +
+        '</td>';
+      tb.appendChild(tr);
+    });
+  });
+}
+
+function editUser(userId) {
+  var u = STATE.users.find(function (x) { return x.userId === userId; });
+  if (!u) return;
+  document.getElementById('uId').value = u.userId;
+  document.getElementById('uName').value = u.fullName;
+  document.getElementById('uMobile').value = u.mobile;
+  document.getElementById('uEmail').value = u.email;
+  document.getElementById('uRole').value = u.role;
+  document.getElementById('uStatus').value = u.status;
+  document.getElementById('uPrimaryTaluka').value = u.primaryTaluka;
+  document.getElementById('uExtraTalukas').value = u.extraTalukas;
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uName').focus();
+}
+
+function resetUserForm() {
+  ['uId', 'uName', 'uMobile', 'uEmail', 'uExtraTalukas', 'uPassword'].forEach(function (id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('uRole').value = 'TalukaUser';
+  document.getElementById('uStatus').value = 'Active';
+}
+
+function saveUser(ev) {
+  ev.preventDefault();
+  var rec = {
+    userId: document.getElementById('uId').value.trim(),
+    fullName: document.getElementById('uName').value.trim(),
+    mobile: document.getElementById('uMobile').value.trim(),
+    email: document.getElementById('uEmail').value.trim(),
+    role: document.getElementById('uRole').value,
+    status: document.getElementById('uStatus').value,
+    primaryTaluka: document.getElementById('uPrimaryTaluka').value,
+    extraTalukas: document.getElementById('uExtraTalukas').value.trim(),
+    password: document.getElementById('uPassword').value
+  };
+  apiPost({ action: 'upsertUser', userRecord: rec }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    showMsg('ok', res.message);
+    resetUserForm();
+    loadUsers();
+  });
+}
+
+function toggleStatus(userId, nextStatus) {
+  if (!confirm('युजरची स्थिती "' + nextStatus + '" करायची?')) return;
+  apiPost({ action: 'setUserStatus', targetUserId: userId, status: nextStatus }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    showMsg('ok', res.message);
+    loadUsers();
+  });
+}
+
+function promptResetPwd(userId) {
+  var np = prompt('नवीन पासवर्ड टाका (किमान ४ अक्षरे):');
+  if (!np) return;
+  apiPost({ action: 'resetUserPassword', targetUserId: userId, newPassword: np }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    showMsg('ok', res.message);
+  });
+}
+
+/* ---------- TALUKA CONFIG (SUPERADMIN) ---------- */
+function loadTalukaConfigs() {
+  apiPost({ action: 'getTalukaConfigs' }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    var wrap = document.getElementById('talukaCfgList');
+    wrap.innerHTML = '';
+    var blocks = (STATE.boot && STATE.boot.blocks) || [];
+    blocks.forEach(function (k) {
+      var c = res.configs[k] || {};
+      var div = document.createElement('div');
+      div.style.cssText = 'border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;background:#f8fafc;';
+      div.innerHTML =
+        '<div style="font-weight:700;margin-bottom:8px;color:var(--primary);">' + esc(k) + ' (' + esc(c.talukaMr || '') + ')</div>' +
+        '<div class="grid">' +
+          '<div><label>Sheet ID</label><input id="cfg_s_' + k + '" value="' + esc(c.sheetId || '') + '"></div>' +
+          '<div><label>Folder ID</label><input id="cfg_f_' + k + '" value="' + esc(c.folderId || '') + '"></div>' +
+          '<div><label>Panchayat Samiti</label><input id="cfg_p_' + k + '" value="' + esc(c.panchayatSamiti || k) + '"></div>' +
+          '<div><label>Default AO Name</label><input id="cfg_a_' + k + '" value="' + esc(c.defaultAo || '') + '"></div>' +
+        '</div>' +
+        '<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" type="button" onclick="saveOneTalukaCfg(\'' + k + '\')">जतन करा</button></div>';
+      wrap.appendChild(div);
+    });
+  });
+}
+
+function saveOneTalukaCfg(k) {
+  var rec = {
+    talukaKey: k,
+    sheetId: document.getElementById('cfg_s_' + k).value.trim(),
+    folderId: document.getElementById('cfg_f_' + k).value.trim(),
+    panchayatSamiti: document.getElementById('cfg_p_' + k).value.trim(),
+    defaultAo: document.getElementById('cfg_a_' + k).value.trim()
+  };
+  apiPost({ action: 'saveTalukaConfig', configRecord: rec }).then(function (res) {
+    if (!res.ok) { showMsg('err', res.error); return; }
+    showMsg('ok', res.message);
+    if (STATE.boot && STATE.boot.talukaMeta) {
+      STATE.boot.talukaMeta[k] = Object.assign(STATE.boot.talukaMeta[k] || {}, rec);
+    }
+  });
+}
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+
+(function restoreSession() {
+  try {
+    var raw = sessionStorage.getItem('wsm_sess');
+    if (!raw) return;
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.token && parsed.user && parsed.boot) {
+      STATE.token = parsed.token;
+      STATE.user = parsed.user;
+      STATE.boot = parsed.boot;
+      enterApp();
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
