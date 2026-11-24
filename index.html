@@ -6,7 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f4e79">
 <link rel="manifest" href="manifest.json">
-<title>अंदाजपत्रक – नविन विहीर (Multi-Taluka PWA)</title>
+<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<title>विहिरीचे अंदाजपत्रक – SCP</title>
 <style>
   * { box-sizing: border-box; }
   :root {
@@ -26,11 +29,15 @@
     font-size: 16px; line-height: 1.45;
   }
   header {
-    background: var(--primary); color: #fff; padding: 14px 16px;
+    background: var(--primary); color: #fff; padding: 12px 16px;
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 6px rgba(0,0,0,.15);
   }
-  .hdr-left { display: flex; align-items: center; gap: 12px; }
+  .hdr-left { display: flex; align-items: center; gap: 10px; }
+  .brand-logo {
+    width: 40px; height: 40px; border-radius: 50%; background: #fff;
+    object-fit: cover; border: 2px solid #ffd54f; flex-shrink: 0;
+  }
   #btnMenu {
     background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3);
     border-radius: 7px; padding: 7px 11px; font-size: 18px; cursor: pointer; display: none;
@@ -40,6 +47,19 @@
   #btnLogout {
     background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.35);
     border-radius: 7px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: none;
+  }
+
+  /* Install Gate Card */
+  .install-box {
+    text-align: center; padding: 24px 18px;
+  }
+  .install-logo {
+    width: 112px; height: 112px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15); border: 3px solid var(--primary); margin: 0 auto 14px;
+    display: block;
+  }
+  .install-actions {
+    display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 18px auto 0;
   }
 
   /* Side Drawer Menu */
@@ -154,9 +174,10 @@
 
 <header>
   <div class="hdr-left">
+    <img src="icons/icon-72x72.png" alt="Logo" class="brand-logo">
     <button id="btnMenu" type="button" onclick="toggleDrawer(true)">&#9776;</button>
     <div>
-      <h1>अंदाजपत्रक – नविन विहीर (SCP)</h1>
+      <h1>विहिरीचे अंदाजपत्रक – SCP</h1>
       <p id="hdrSub">जिल्हा परिषद वाशिम · कृषी विभाग</p>
     </div>
   </div>
@@ -182,8 +203,53 @@
 <main>
   <div id="msg"></div>
 
+  <!-- INSTALL-ONLY GATE VIEW (ब्राउझरमधून थेट वापर रोखण्यासाठी) -->
+  <section id="installGateView" style="display:none;">
+    <div class="install-box">
+      <img src="icons/icon-192x192.png" alt="विहिरीचे अंदाजपत्रक" class="install-logo">
+      <h2 style="border:none;margin:0 0 8px;font-size:18px;">ॲप इंस्टॉल करणे आवश्यक आहे</h2>
+      <p style="margin:0;color:#384250;font-size:14.5px;">
+        हे वेब ॲप ब्राउझरमध्ये थेट चालत नाही. प्रथम मोबाईल/डिव्हाइसवर <strong>इंस्टॉल (Add to Home Screen / Install App)</strong> करा आणि त्यानंतर होमस्क्रीनवरील <strong>ॲप आयकॉनवरूनच</strong> उघडा.
+      </p>
+      <div class="install-actions">
+        <button id="btnInstallApp" class="btn btn-success" type="button" style="display:none;padding:13px;" onclick="triggerInstall()">
+          📲 ॲप इंस्टॉल करा
+        </button>
+        <p id="installStatusNote" class="hint" style="margin:0;">
+          पॉप-अप न आल्यास ब्राउझरच्या <strong>⋮ (मेन्यू) → Install app / Add to Home screen</strong> निवडा.
+        </p>
+        <button id="btnCheckInstalled" class="btn btn-primary" type="button" style="padding:12px;" onclick="checkInstalledAndProceed()">
+          मी ॲप इंस्टॉल केले आहे – पुढे जा
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORCE CHANGE PASSWORD VIEW (पहिल्या लॉगिनला किंवा रिसेट नंतर) -->
+  <section id="forcePwdView" style="display:none;">
+    <h2>नवीन पासवर्ड सेट करणे अनिवार्य आहे</h2>
+    <p class="hint" style="margin-bottom:12px;color:#92241b;font-weight:600;">
+      तुम्ही डीफॉल्ट पासवर्डने लॉगिन केले आहे. सुरक्षिततेसाठी कृपया स्वतःचा नवीन पासवर्ड सेट करा.
+    </p>
+    <div class="grid">
+      <div class="full">
+        <label>नवीन पासवर्ड (किमान ४ अक्षरे) <span class="req">*</span></label>
+        <input id="newPwd1" type="password" placeholder="नवीन पासवर्ड टाका">
+      </div>
+      <div class="full">
+        <label>नवीन पासवर्ड पुन्हा टाका <span class="req">*</span></label>
+        <input id="newPwd2" type="password" placeholder="पासवर्डची पुष्टी करा">
+      </div>
+      <div class="full">
+        <button id="btnSaveNewPwd" class="btn btn-success" type="button" style="width:100%;padding:12px;" onclick="submitNewPassword()">
+          नवीन पासवर्ड जतन करा व ॲप सुरू करा
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- LOGIN VIEW -->
-  <section id="loginView">
+  <section id="loginView" style="display:none;">
     <h2>अधिकृत लॉगिन (मोबाईल नंबर किंवा ईमेल)</h2>
     <div class="grid">
       <div class="full">
@@ -198,7 +264,7 @@
         <button id="btnLogin" class="btn btn-primary" type="button" style="width:100%;padding:12px;" onclick="doLogin()">लॉगिन करा</button>
       </div>
     </div>
-    <p class="hint">टीप: खाते Active असल्यासच लॉगिन होईल.</p>
+    <p class="hint">टीप: पहिल्यांदा लॉगिन करताना डीफॉल्ट पासवर्ड टाकल्यावर नवीन पासवर्ड सेट करावा लागेल.</p>
   </section>
 
   <!-- ESTIMATE FORM VIEW -->
@@ -324,7 +390,7 @@
 
   <!-- USER MANAGEMENT VIEW (ADMIN / SUPERADMIN) -->
   <section id="usersView" style="display:none;">
-    <h2>युझर मॅनेजमेंट (नवीन युझर / बदली / अतिरिक्त पदभार / Status / Password Reset)</h2>
+    <h2>युझर मॅनेजमेंट (नवीन युझर / बदली / अतिरिक्त पदभार / Status / Default Password Reset)</h2>
     <form id="userForm" onsubmit="saveUser(event)" style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #e2e8f0;">
       <div class="grid">
         <div>
@@ -366,10 +432,6 @@
           <label>अतिरिक्त पदभार तालुके (स्वल्पविरामाने)</label>
           <input id="uExtraTalukas" type="text" placeholder="उदा. Malegaon,Risod">
         </div>
-        <div class="full">
-          <label>पासवर्ड (नवीन युझरसाठी किंवा बदलण्यासाठी टाका)</label>
-          <input id="uPassword" type="text" placeholder="नवीन/सध्याचा पासवर्ड">
-        </div>
         <div class="full" style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-success" type="submit">युझर जतन / अपडेट करा</button>
           <button class="btn btn-secondary" type="button" onclick="resetUserForm()">फॉर्म साफ करा</button>
@@ -406,6 +468,86 @@ var STATE = {
   boot: null,
   users: []
 };
+
+var deferredInstallPrompt = null;
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  var btn = document.getElementById('btnInstallApp');
+  if (btn) btn.style.display = 'inline-block';
+});
+
+window.addEventListener('appinstalled', function () {
+  localStorage.setItem('wsm_installed_flag', '1');
+  deferredInstallPrompt = null;
+  routeEntryScreen();
+});
+
+function triggerInstall() {
+  if (!deferredInstallPrompt) {
+    alert('कृपया ब्राउझरच्या ⋮ (मेन्यू) मधून "Install app" किंवा "Add to Home screen" निवडा.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(function (choice) {
+    if (choice.outcome === 'accepted') {
+      localStorage.setItem('wsm_installed_flag', '1');
+      routeEntryScreen();
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+function checkInstalledAndProceed() {
+  if (!isStandaloneMode()) {
+    alert('कृपया ब्राउझरमधून थेट न वापरता, इंस्टॉल केलेल्या ॲपच्या (Home Screen) आयकॉनवरून ॲप उघडा.');
+    return;
+  }
+  localStorage.setItem('wsm_installed_flag', '1');
+  routeEntryScreen();
+}
+
+function routeEntryScreen() {
+  ['installGateView', 'loginView', 'forcePwdView', 'estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  if (!isStandaloneMode()) {
+    document.getElementById('btnMenu').style.display = 'none';
+    document.getElementById('btnLogout').style.display = 'none';
+    document.getElementById('installGateView').style.display = 'block';
+    return;
+  }
+
+  localStorage.setItem('wsm_installed_flag', '1');
+
+  try {
+    var raw = sessionStorage.getItem('wsm_sess');
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.token && parsed.user) {
+        STATE.token = parsed.token;
+        STATE.user = parsed.user;
+        STATE.boot = parsed.boot || null;
+        if (parsed.user.mustChangePwd) {
+          showForceChangePwdScreen();
+          return;
+        }
+        if (STATE.boot) {
+          enterApp();
+          return;
+        }
+      }
+    }
+  } catch (e) {}
+
+  document.getElementById('loginView').style.display = 'block';
+}
 
 function apiPost(payload) {
   if (!API_URL || API_URL.indexOf('YOUR_DEPLOYMENT_ID') !== -1) {
@@ -464,9 +606,18 @@ function doLogin() {
       }
       STATE.token = res.token;
       STATE.user = res.user;
-      STATE.boot = res.boot;
-      sessionStorage.setItem('wsm_sess', JSON.stringify({ token: res.token, user: res.user, boot: res.boot }));
-      enterApp();
+      STATE.boot = res.boot || null;
+      sessionStorage.setItem('wsm_sess', JSON.stringify({
+        token: res.token,
+        user: res.user,
+        boot: res.boot || null
+      }));
+
+      if (res.mustChangePassword || (res.user && res.user.mustChangePwd)) {
+        showForceChangePwdScreen();
+      } else {
+        enterApp();
+      }
     })
     .catch(function (err) {
       btn.disabled = false;
@@ -475,9 +626,64 @@ function doLogin() {
     });
 }
 
+function showForceChangePwdScreen() {
+  ['installGateView', 'loginView', 'estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('btnMenu').style.display = 'none';
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  document.getElementById('newPwd1').value = '';
+  document.getElementById('newPwd2').value = '';
+  document.getElementById('forcePwdView').style.display = 'block';
+}
+
+function submitNewPassword() {
+  var p1 = document.getElementById('newPwd1').value.trim();
+  var p2 = document.getElementById('newPwd2').value.trim();
+  hideMsg();
+
+  if (p1.length < 4) {
+    showMsg('err', 'नवीन पासवर्ड किमान ४ अक्षरांचा असावा.');
+    return;
+  }
+  if (p1 !== p2) {
+    showMsg('err', 'दोन्ही पासवर्ड सारखे नाहीत. कृपया पुन्हा तपासा.');
+    return;
+  }
+
+  var btn = document.getElementById('btnSaveNewPwd');
+  btn.disabled = true;
+  btn.textContent = 'पासवर्ड जतन होत आहे…';
+
+  apiPost({ action: 'changePassword', newPassword: p1 })
+    .then(function (res) {
+      btn.disabled = false;
+      btn.textContent = 'नवीन पासवर्ड जतन करा व ॲप सुरू करा';
+      if (!res.ok) {
+        showMsg('err', res.error || 'पासवर्ड बदलता आला नाही.');
+        return;
+      }
+      STATE.user = res.user;
+      STATE.boot = res.boot;
+      sessionStorage.setItem('wsm_sess', JSON.stringify({
+        token: STATE.token,
+        user: res.user,
+        boot: res.boot
+      }));
+      showMsg('ok', res.message);
+      enterApp();
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'नवीन पासवर्ड जतन करा व ॲप सुरू करा';
+      showMsg('err', err.message || String(err));
+    });
+}
+
 function enterApp() {
   var u = STATE.user;
   document.getElementById('loginView').style.display = 'none';
+  document.getElementById('forcePwdView').style.display = 'none';
   document.getElementById('btnLogout').style.display = 'inline-block';
   document.getElementById('btnMenu').style.display = 'inline-block';
   document.getElementById('hdrSub').textContent = u.fullName + ' (' + u.role + ')';
@@ -505,12 +711,12 @@ function logout() {
   document.getElementById('btnLogout').style.display = 'none';
   document.getElementById('btnMenu').style.display = 'none';
   document.getElementById('hdrSub').textContent = 'जिल्हा परिषद वाशिम · कृषी विभाग';
-  ['estimateView', 'logsView', 'usersView', 'talukaCfgView'].forEach(function (id) {
+  ['estimateView', 'logsView', 'usersView', 'talukaCfgView', 'forcePwdView'].forEach(function (id) {
     document.getElementById(id).style.display = 'none';
   });
-  document.getElementById('loginView').style.display = 'block';
   document.getElementById('loginPwd').value = '';
   hideMsg();
+  routeEntryScreen();
 }
 
 function switchView(viewName) {
@@ -781,7 +987,7 @@ function loadUsers() {
         '<td><span class="' + (isAct ? 'badge-active' : 'badge-inactive') + '">' + esc(u.status) + '</span></td>' +
         '<td class="row-actions">' +
           '<button class="btn btn-secondary btn-sm" type="button" onclick="editUser(\'' + esc(u.userId) + '\')">बदली / एडिट</button>' +
-          '<button class="btn btn-secondary btn-sm" type="button" onclick="promptResetPwd(\'' + esc(u.userId) + '\')">पासवर्ड रिसेट</button>' +
+          '<button class="btn btn-secondary btn-sm" type="button" onclick="resetToDefaultPwd(\'' + esc(u.userId) + '\')">पासवर्ड रिसेट (Default)</button>' +
           '<button class="btn ' + (isAct ? 'btn-danger' : 'btn-success') + ' btn-sm" type="button" onclick="toggleStatus(\'' + esc(u.userId) + '\', \'' + (isAct ? 'Inactive' : 'Active') + '\')">' +
             (isAct ? 'Inactive करा' : 'Active करा') +
           '</button>' +
@@ -802,12 +1008,11 @@ function editUser(userId) {
   document.getElementById('uStatus').value = u.status;
   document.getElementById('uPrimaryTaluka').value = u.primaryTaluka;
   document.getElementById('uExtraTalukas').value = u.extraTalukas;
-  document.getElementById('uPassword').value = '';
   document.getElementById('uName').focus();
 }
 
 function resetUserForm() {
-  ['uId', 'uName', 'uMobile', 'uEmail', 'uExtraTalukas', 'uPassword'].forEach(function (id) {
+  ['uId', 'uName', 'uMobile', 'uEmail', 'uExtraTalukas'].forEach(function (id) {
     document.getElementById(id).value = '';
   });
   document.getElementById('uRole').value = 'TalukaUser';
@@ -824,8 +1029,7 @@ function saveUser(ev) {
     role: document.getElementById('uRole').value,
     status: document.getElementById('uStatus').value,
     primaryTaluka: document.getElementById('uPrimaryTaluka').value,
-    extraTalukas: document.getElementById('uExtraTalukas').value.trim(),
-    password: document.getElementById('uPassword').value
+    extraTalukas: document.getElementById('uExtraTalukas').value.trim()
   };
   apiPost({ action: 'upsertUser', userRecord: rec }).then(function (res) {
     if (!res.ok) { showMsg('err', res.error); return; }
@@ -844,12 +1048,12 @@ function toggleStatus(userId, nextStatus) {
   });
 }
 
-function promptResetPwd(userId) {
-  var np = prompt('नवीन पासवर्ड टाका (किमान ४ अक्षरे):');
-  if (!np) return;
-  apiPost({ action: 'resetUserPassword', targetUserId: userId, newPassword: np }).then(function (res) {
+function resetToDefaultPwd(userId) {
+  if (!confirm('हा पासवर्ड रिसेट करून डीफॉल्ट पासवर्डवर आणायचा का?')) return;
+  apiPost({ action: 'resetUserToDefaultPassword', targetUserId: userId }).then(function (res) {
     if (!res.ok) { showMsg('err', res.error); return; }
     showMsg('ok', res.message);
+    loadUsers();
   });
 }
 
@@ -905,19 +1109,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
 }
 
-(function restoreSession() {
-  try {
-    var raw = sessionStorage.getItem('wsm_sess');
-    if (!raw) return;
-    var parsed = JSON.parse(raw);
-    if (parsed && parsed.token && parsed.user && parsed.boot) {
-      STATE.token = parsed.token;
-      STATE.user = parsed.user;
-      STATE.boot = parsed.boot;
-      enterApp();
-    }
-  } catch (e) {}
-})();
+routeEntryScreen();
 </script>
 </body>
 </html>
