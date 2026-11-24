@@ -483,8 +483,9 @@ function enterApp() {
   document.getElementById('dUserContact').textContent = [u.mobile, u.email].filter(Boolean).join(' · ');
   document.getElementById('dUserRole').textContent = u.role;
 
-  var isAdmin = (u.role === 'Admin' || u.role === 'SuperAdmin');
-  var isSuper = (u.role === 'SuperAdmin');
+  var roleClean = String(u.role || '').trim().toLowerCase();
+var isAdmin = (roleClean === 'admin' || roleClean === 'superadmin');
+var isSuper = (roleClean === 'superadmin');
   document.getElementById('navUsers').classList.toggle('hidden-role', !isAdmin);
   document.getElementById('navTalukaCfg').classList.toggle('hidden-role', !isSuper);
 
