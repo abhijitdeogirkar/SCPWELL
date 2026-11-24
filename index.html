@@ -7,7 +7,6 @@
 <meta name="theme-color" content="#1f4e79">
 <link rel="manifest" href="manifest.json">
 <title>अंदाजपत्रक – नविन विहीर (Multi-Taluka PWA)</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   :root {
@@ -94,6 +93,9 @@
     width: 100%; padding: 10px 11px; font-size: 15px; font-family: inherit;
     border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--text);
   }
+  input[readonly] {
+    background: #f1f5f9; color: #334155;
+  }
   input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(31,78,121,.12);
   }
@@ -137,19 +139,10 @@
   #msg.ok { display: block; background: #e7f6ec; color: #1e6b36; border: 1px solid #b7e0c4; }
   #msg.err { display: block; background: #fdeceb; color: #92241b; border: 1px solid #f5c2bd; }
   #msg a { color: var(--primary); font-weight: 700; }
-  #msg .note { display: block; margin-top: 8px; font-size: 12.5px; color: #8a5a00; }
 
   .badge-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
   .badge-inactive { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
   .row-actions { display: flex; gap: 5px; flex-wrap: wrap; }
-
-  /* QR Scanner Overlay */
-  #qrOverlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.86);
-    z-index: 300; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
-  }
-  #qrReaderBox { width: 92%; max-width: 440px; background: #fff; padding: 14px; border-radius: 10px; }
-  #qrStatusText { color: #ffd54f; font-size: 13px; margin-top: 10px; text-align: center; max-width: 440px; }
 
   @media (max-width: 580px) {
     .grid { grid-template-columns: 1fr; }
@@ -205,94 +198,104 @@
         <button id="btnLogin" class="btn btn-primary" type="button" style="width:100%;padding:12px;" onclick="doLogin()">लॉगिन करा</button>
       </div>
     </div>
-    <p class="hint">टीप: खाते Active असल्यासच लॉगिन होईल. बदली, अतिरिक्त पदभार किंवा पासवर्ड रिसेटसाठी Admin / SuperAdmin मेन्यू वापरा.</p>
+    <p class="hint">टीप: खाते Active असल्यासच लॉगिन होईल.</p>
   </section>
 
   <!-- ESTIMATE FORM VIEW -->
   <div id="estimateView" style="display:none;">
-    <section>
-      <h2>तालुका निवड व कामाची माहिती</h2>
-      <div class="grid">
-        <div>
-          <label>Taluka <span class="req">*</span><span class="cellref">C6</span></label>
-          <select id="taluka" onchange="onTalukaChanged()"></select>
+    <form id="estimateForm" onsubmit="onPdf(event)">
+      <section>
+        <h2>तालुका निवड व कामाची माहिती</h2>
+        <div class="grid">
+          <div>
+            <label>Taluka <span class="req">*</span><span class="cellref">C6</span></label>
+            <select id="taluka" required onchange="onTalukaChanged()"></select>
+          </div>
+          <div>
+            <label>Panchayat Samiti <span class="req">*</span><span class="cellref">C7</span></label>
+            <input id="panchayat" type="text" readonly required>
+          </div>
+          <div class="full">
+            <label>Application ID <span class="req">*</span><span class="cellref">C1</span></label>
+            <input id="appId" type="text" inputmode="numeric" pattern="\d+" required autocomplete="off"
+                   placeholder="फक्त अंक टाका (उदा. 123456)"
+                   oninput="this.value = this.value.replace(/\D/g, '')">
+          </div>
+          <div class="full">
+            <label>Beneficiary Name <span class="req">*</span><span class="cellref">C2</span></label>
+            <input id="beneficiary" type="text" required autocomplete="off">
+          </div>
+          <div>
+            <label>Contact No. <span class="req">*</span><span class="cellref">C3</span></label>
+            <input id="contact" type="tel" inputmode="numeric" maxlength="10" pattern="\d{10}" required autocomplete="off"
+                   placeholder="10 अंकी मोबाईल नंबर"
+                   oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+          </div>
+          <div>
+            <label>Village of residence (Grampanchayat) <span class="req">*</span><span class="cellref">C4</span></label>
+            <input id="village" type="text" list="gpList" required autocomplete="off" placeholder="ग्रामपंचायत निवडा किंवा टाका">
+            <datalist id="gpList"></datalist>
+          </div>
+          <div>
+            <label>Shivar (Village on 7/12 ) <span class="req">*</span><span class="cellref">C5</span></label>
+            <input id="shivar" type="text" list="village712List" required autocomplete="off" placeholder="7/12 गाव निवडा किंवा टाका">
+            <datalist id="village712List"></datalist>
+          </div>
+          <div>
+            <label>Gat no/ Survey No <span class="req">*</span><span class="cellref">C8</span></label>
+            <input id="gat" type="text" pattern="[A-Za-z0-9\u0900-\u097F\s/\-]+" required autocomplete="off"
+                   placeholder="अंक, अक्षरे, /, -">
+          </div>
+          <div>
+            <label>8a Area (Ha.) <span class="req">*</span><span class="cellref">C9</span></label>
+            <input id="area" type="number" step="0.0001" min="0" inputmode="decimal" required placeholder="उदा. 0.4500">
+          </div>
+          <div class="full">
+            <label>Name of scheme <span class="req">*</span><span class="cellref">C10</span></label>
+            <select id="scheme" required></select>
+          </div>
+          <div>
+            <label>Year of Selection <span class="req">*</span><span class="cellref">C11</span></label>
+            <select id="year" required></select>
+          </div>
+          <div>
+            <label>Name of AO(SCP) <span class="req">*</span><span class="cellref">C13</span></label>
+            <input id="aoInput" type="text" readonly style="display:none;">
+            <select id="aoSelect" style="display:none;"></select>
+          </div>
         </div>
-        <div>
-          <label>Panchayat Samiti <span class="req">*</span><span class="cellref">C7</span></label>
-          <select id="panchayat"></select>
-        </div>
-        <div class="full">
-          <label>Application ID <span class="req">*</span><span class="cellref">C1</span></label>
-          <input id="appId" type="text" autocomplete="off" placeholder="उदा. WS26-27...">
-        </div>
-        <div class="full">
-          <label>Beneficiary Name <span class="req">*</span><span class="cellref">C2</span></label>
-          <input id="beneficiary" type="text" autocomplete="off">
-        </div>
-        <div>
-          <label>Contact No. <span class="req">*</span><span class="cellref">C3</span></label>
-          <input id="contact" type="tel" inputmode="numeric" maxlength="10" autocomplete="off">
-        </div>
-        <div>
-          <label>Village Name <span class="req">*</span><span class="cellref">C4</span></label>
-          <input id="village" type="text" autocomplete="off">
-        </div>
-        <div>
-          <label>Shivar of work <span class="req">*</span><span class="cellref">C5</span></label>
-          <input id="shivar" type="text" autocomplete="off">
-        </div>
-        <div>
-          <label>Gat no/ Survey No <span class="req">*</span><span class="cellref">C8</span></label>
-          <input id="gat" type="text" autocomplete="off">
-        </div>
-        <div>
-          <label>8a Area (Ha.) <span class="req">*</span><span class="cellref">C9</span></label>
-          <input id="area" type="number" step="0.0001" min="0" inputmode="decimal">
-        </div>
-        <div class="full">
-          <label>Name of scheme <span class="req">*</span><span class="cellref">C10</span></label>
-          <select id="scheme"></select>
-        </div>
-        <div>
-          <label>Year of Selection <span class="req">*</span><span class="cellref">C11</span></label>
-          <select id="year"></select>
-        </div>
-        <div>
-          <label>Name of AO(SCP) <span class="cellref">C13</span></label>
-          <input id="ao" type="text" autocomplete="off">
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section>
-      <h2>Lead Statement – साहित्य स्त्रोत व अंतर</h2>
-      <table class="lead">
-        <tr>
-          <th>Item</th>
-          <th>Source Of Material (Village Name)</th>
-          <th>Distance (Km)</th>
-          <th></th>
-        </tr>
-        <tbody id="leadBody"></tbody>
-      </table>
-      <p class="hint">अंतर ठरलेल्या यादीतूनच निवडा – दर त्या तक्त्यातूनच घेतले जातात.</p>
-    </section>
+      <section>
+        <h2>Lead Statement – साहित्य स्त्रोत व अंतर</h2>
+        <table class="lead">
+          <tr>
+            <th>Item</th>
+            <th>Source Of Material (Village Name) <span class="req">*</span></th>
+            <th>Distance (Km) <span class="req">*</span></th>
+            <th></th>
+          </tr>
+          <tbody id="leadBody"></tbody>
+        </table>
+        <p class="hint">सर्व बाबींसाठी सोर्स गाव व अंतर अनिवार्य आहे.</p>
+      </section>
 
-    <section>
-      <h2>मंजुर बाब</h2>
-      <div class="grid">
-        <div class="full">
-          <label>मंजुर बाब <span class="req">*</span><span class="cellref">QR मध्ये</span></label>
-          <select id="sanctionItem"></select>
+      <section>
+        <h2>मंजुर बाब</h2>
+        <div class="grid">
+          <div class="full">
+            <label>मंजुर बाब <span class="req">*</span><span class="cellref">QR मध्ये</span></label>
+            <select id="sanctionItem" required></select>
+          </div>
         </div>
-      </div>
-      <p class="hint">ही निवड अंदाजपत्रकात छापली जात नाही – फक्त QR कोडमध्ये जाते.</p>
-    </section>
+        <p class="hint">ही निवड अंदाजपत्रकात छापली जात नाही – फक्त QR कोडमध्ये जाते.</p>
+      </section>
 
-    <footer class="action-bar">
-      <button id="btnClear" class="btn btn-secondary" type="button" onclick="clearForm()">रिकामा करा</button>
-      <button id="btnPdf" class="btn btn-primary" type="button" onclick="onPdf()">PDF तयार करा</button>
-    </footer>
+      <footer class="action-bar">
+        <button id="btnClear" class="btn btn-secondary" type="button" onclick="clearForm()">रिकामा करा</button>
+        <button id="btnPdf" class="btn btn-primary" type="submit">PDF तयार करा</button>
+      </footer>
+    </form>
   </div>
 
   <!-- LOGS VIEW -->
@@ -394,15 +397,7 @@
   </section>
 </main>
 
-<!-- QR Overlay (Optional helper if needed) -->
-<div id="qrOverlay">
-  <div id="qrReaderBox"></div>
-  <div id="qrStatusText"></div>
-  <button class="btn btn-danger btn-sm" style="margin-top:14px;" onclick="stopQr()">बंद करा</button>
-</div>
-
 <script>
-// 🔴 येथे तुमच्या Deployed Google Apps Script Web App ची /exec URL टाका 🔴
 var API_URL = 'https://script.google.com/macros/s/AKfycbywppeEPzjaYbCEKa5_U44OYkFT159Zcarft1gRTXXyED--ZweJau698GW_eIwRpQcKKg/exec';
 
 var STATE = {
@@ -421,9 +416,17 @@ function apiPost(payload) {
   }
   return fetch(API_URL, {
     method: 'POST',
+    mode: 'cors',
+    redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
-  }).then(function (r) { return r.json(); });
+  }).then(function (res) {
+    if (!res.ok) throw new Error('HTTP Status ' + res.status);
+    return res.text();
+  }).then(function (txt) {
+    try { return JSON.parse(txt); }
+    catch (e) { throw new Error('Server प्रतिसाद वाचता आला नाही.'); }
+  });
 }
 
 function showMsg(kind, html) {
@@ -484,8 +487,8 @@ function enterApp() {
   document.getElementById('dUserRole').textContent = u.role;
 
   var roleClean = String(u.role || '').trim().toLowerCase();
-var isAdmin = (roleClean === 'admin' || roleClean === 'superadmin');
-var isSuper = (roleClean === 'superadmin');
+  var isAdmin = (roleClean === 'admin' || roleClean === 'superadmin');
+  var isSuper = (roleClean === 'superadmin');
   document.getElementById('navUsers').classList.toggle('hidden-role', !isAdmin);
   document.getElementById('navTalukaCfg').classList.toggle('hidden-role', !isSuper);
 
@@ -547,16 +550,55 @@ function fillSelect(el, list, chosen) {
   });
 }
 
+function fillDatalist(dlId, list) {
+  var dl = document.getElementById(dlId);
+  dl.innerHTML = '';
+  (list || []).forEach(function (v) {
+    var o = document.createElement('option');
+    o.value = v;
+    dl.appendChild(o);
+  });
+}
+
+function setupAoField() {
+  var b = STATE.boot || {};
+  var aoInput = document.getElementById('aoInput');
+  var aoSelect = document.getElementById('aoSelect');
+
+  if (b.isAdmin) {
+    aoInput.style.display = 'none';
+    aoInput.required = false;
+    aoSelect.style.display = 'block';
+    aoSelect.required = true;
+    var list = (b.aoOptions && b.aoOptions.length) ? b.aoOptions : [STATE.user.fullName || ''];
+    var chosen = (list.indexOf(STATE.user.fullName) !== -1) ? STATE.user.fullName : list[0];
+    fillSelect(aoSelect, list, chosen);
+  } else {
+    aoSelect.style.display = 'none';
+    aoSelect.required = false;
+    aoInput.style.display = 'block';
+    aoInput.required = true;
+    aoInput.value = (STATE.user && STATE.user.fullName) ? STATE.user.fullName : '';
+  }
+}
+
+function getAoValue() {
+  var b = STATE.boot || {};
+  return b.isAdmin
+    ? document.getElementById('aoSelect').value.trim()
+    : document.getElementById('aoInput').value.trim();
+}
+
 function initEstimateForm() {
   var b = STATE.boot;
   var allowed = b.allowedTalukas || b.blocks;
   var defTaluka = b.defaultTaluka || allowed[0];
 
   fillSelect(document.getElementById('taluka'), allowed, defTaluka);
-  fillSelect(document.getElementById('panchayat'), b.blocks, defTaluka);
   fillSelect(document.getElementById('scheme'), b.schemes, b.schemes[0]);
   fillSelect(document.getElementById('year'), b.years, b.years[2] || b.years[0]);
   fillSelect(document.getElementById('sanctionItem'), b.sanctionItems, b.sanctionItems[0]);
+  setupAoField();
 
   var body = document.getElementById('leadBody');
   body.innerHTML = '';
@@ -565,13 +607,13 @@ function initEstimateForm() {
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="item">' + mat + '</td>' +
-      '<td><input id="leadv' + i + '" type="text" autocomplete="off"></td>' +
-      '<td><select id="leadd' + i + '"></select></td>' +
+      '<td><input id="leadv' + i + '" type="text" required autocomplete="off" placeholder="सोर्स गाव"></td>' +
+      '<td><select id="leadd' + i + '" required></select></td>' +
       '<td class="cell">' + cells[i][0] + '<br>' + cells[i][1] + '</td>';
     body.appendChild(tr);
     var sel = document.getElementById('leadd' + i);
     fillSelect(sel, [''].concat(b.leads), '');
-    sel.options[0].textContent = '—';
+    sel.options[0].textContent = '— निवडा —';
   });
 
   onTalukaChanged();
@@ -581,7 +623,10 @@ function onTalukaChanged() {
   var t = document.getElementById('taluka').value;
   var meta = (STATE.boot && STATE.boot.talukaMeta && STATE.boot.talukaMeta[t]) || {};
   document.getElementById('panchayat').value = meta.panchayatSamiti || t;
-  document.getElementById('ao').value = meta.defaultAo || '';
+
+  var vMaster = (STATE.boot && STATE.boot.villageMaster && STATE.boot.villageMaster[t]) || { gramPanchayats: [], villages712: [] };
+  fillDatalist('gpList', vMaster.gramPanchayats);
+  fillDatalist('village712List', vMaster.villages712);
 }
 
 function collectEstimate() {
@@ -599,44 +644,70 @@ function collectEstimate() {
     village: document.getElementById('village').value.trim(),
     shivar: document.getElementById('shivar').value.trim(),
     taluka: document.getElementById('taluka').value,
-    panchayat: document.getElementById('panchayat').value,
+    panchayat: document.getElementById('panchayat').value.trim(),
     gat: document.getElementById('gat').value.trim(),
     area: document.getElementById('area').value,
     scheme: document.getElementById('scheme').value,
     year: document.getElementById('year').value,
-    ao: document.getElementById('ao').value.trim(),
+    ao: getAoValue(),
     sanctionItem: document.getElementById('sanctionItem').value,
     lead: lead
   };
 }
 
-function onPdf() {
+function validateEstimateClient(d) {
+  if (!d.taluka) return 'कृपया तालुका निवडा.';
+  if (!/^\d+$/.test(d.appId)) return 'Application ID फक्त अंकात असावा.';
+  if (!d.beneficiary) return 'Beneficiary Name भरणे अनिवार्य आहे.';
+  if (!/^\d{10}$/.test(d.contact)) return 'Contact No. १० अंकी असणे अनिवार्य आहे.';
+  if (!d.village) return 'Village of residence (Grampanchayat) भरणे अनिवार्य आहे.';
+  if (!d.shivar) return 'Shivar (Village on 7/12 ) भरणे अनिवार्य आहे.';
+  if (!d.gat) return 'Gat no/ Survey No भरणे अनिवार्य आहे.';
+  if (d.area === '' || isNaN(Number(d.area)) || Number(d.area) < 0) return '8a Area (Ha.) अंकात/डेसिमलमध्ये असणे अनिवार्य आहे.';
+  if (!d.ao) return 'Name of AO(SCP) निवडणे/भरणे अनिवार्य आहे.';
+  for (var i = 0; i < d.lead.length; i++) {
+    var mat = (STATE.boot && STATE.boot.materials && STATE.boot.materials[i]) || ('ओळ ' + (i + 1));
+    if (!d.lead[i].village) return mat + ' साठी Source Of Material (Village Name) भरणे अनिवार्य आहे.';
+    if (d.lead[i].dist === '') return mat + ' साठी Distance (Km) निवडणे अनिवार्य आहे.';
+  }
+  return '';
+}
+
+function onPdf(ev) {
+  if (ev) ev.preventDefault();
+  var payloadData = collectEstimate();
+  var errMsg = validateEstimateClient(payloadData);
+  if (errMsg) {
+    showMsg('err', errMsg);
+    window.scrollTo(0, 0);
+    return;
+  }
+
   var btn = document.getElementById('btnPdf');
   btn.disabled = true;
   btn.textContent = 'PDF तयार होत आहे…';
   showMsg('ok', 'कृपया थांबा – निवडलेल्या तालुक्याच्या शीटमध्ये माहिती जतन होत आहे, QR बसवला जात आहे व PDF तयार होत आहे…');
 
-  apiPost({ action: 'saveAndPdf', data: collectEstimate() })
+  apiPost({ action: 'saveAndPdf', data: payloadData })
     .then(function (r) {
       btn.disabled = false;
       btn.textContent = 'PDF तयार करा';
       if (!r.ok) {
         showMsg('err', r.error || 'PDF तयार होऊ शकले नाही.');
+        window.scrollTo(0, 0);
         return;
       }
-      var note = r.qrPx < 150
-        ? '<span class="note">QR आकार: ' + r.qrPx + ' px – Front शीटमध्ये रांगा 25–29 उंच केल्यास आकार वाढेल.</span>'
-        : '<span class="note">तालुका: ' + r.taluka + ' · QR: ' + r.qrPx + ' px · ' + r.qrBytes + ' बाइट</span>';
       showMsg('ok',
         'अभिनंदन! PDF तयार झाले आणि QR पहिल्या पानावर बसवला.\n\n' +
         '<a href="' + r.url + '" target="_blank">PDF उघडा / प्रिंट करा</a>\n\n' +
-        'फाइल: ' + r.name + note);
+        'फाइल: ' + r.name);
       window.scrollTo(0, 0);
     })
     .catch(function (e) {
       btn.disabled = false;
       btn.textContent = 'PDF तयार करा';
       showMsg('err', e.message || String(e));
+      window.scrollTo(0, 0);
     });
 }
 
