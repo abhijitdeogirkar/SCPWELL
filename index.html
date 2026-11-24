@@ -237,7 +237,267 @@
 </style>
 </head>
 <body>
+<div id="welcome-curtain-screen" class="wc-overlay">
+  <!-- मध्यभागातून दुभंगून लहरत बाजूला सरकणारा हिरवा पडदा -->
+  <div class="split-curtain-wrap" aria-hidden="true">
+    <!-- डावी बाजू -->
+    <div class="curtain-half curtain-left">
+      <div class="wave-panel wave-back"></div>
+      <div class="wave-panel wave-front"></div>
+    </div>
+    <!-- उजवी बाजू -->
+    <div class="curtain-half curtain-right">
+      <div class="wave-panel wave-back"></div>
+      <div class="wave-panel wave-front"></div>
+    </div>
+  </div>
 
+  <!-- पडदा दुभंगल्यानंतर दिसणारी सामग्री -->
+  <div class="wc-content">
+    <div class="leaders-row">
+      <div class="leader-card fade-photo">
+        <img src="icons/ambedkar.png" alt="डॉ. बाबासाहेब आंबेडकर" class="leader-photo" />
+        <span class="leader-label">डॉ. बाबासाहेब आंबेडकर</span>
+      </div>
+      <div class="leader-card fade-photo delay-photo">
+        <img src="icons/birsa.png" alt="भगवान बिरसा मुंडा" class="leader-photo" />
+        <span class="leader-label">भगवान बिरसा मुंडा</span>
+      </div>
+    </div>
+
+    <blockquote class="abhang-quote">
+      जे का रंजले गांजले, त्यासी म्हणे जो आपुले,<br />
+      तोची साधू ओळखावा, देव तेथेचि जाणावा.
+      <span class="author-name">— संत तुकाराम महाराज</span>
+    </blockquote>
+
+    <button type="button" id="enterAppBtn" class="wc-btn">पुढे जा</button>
+  </div>
+</div>
+
+<style>
+  .wc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow: hidden;
+    transition: opacity 0.55s ease, visibility 0.55s ease;
+  }
+
+  .wc-overlay.hide {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* दुभंगणारा हिरवा पडदा */
+  .split-curtain-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+  }
+
+  .curtain-half {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .wave-panel {
+    position: absolute;
+    top: -6%;
+    height: 112%;
+    width: 115%;
+    will-change: transform, border-radius;
+  }
+
+  /* डावा पडदा */
+  .curtain-left .wave-front {
+    left: 0;
+    background: linear-gradient(160deg, #14532d 0%, #15803d 100%);
+    z-index: 2;
+    animation: splitWaveLeft 1.45s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+
+  .curtain-left .wave-back {
+    left: 0;
+    background: linear-gradient(160deg, #22c55e 0%, #4ade80 100%);
+    z-index: 1;
+    animation: splitWaveLeft 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+  }
+
+  /* उजवा पडदा */
+  .curtain-right .wave-front {
+    right: 0;
+    background: linear-gradient(200deg, #14532d 0%, #15803d 100%);
+    z-index: 2;
+    animation: splitWaveRight 1.45s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+
+  .curtain-right .wave-back {
+    right: 0;
+    background: linear-gradient(200deg, #22c55e 0%, #4ade80 100%);
+    z-index: 1;
+    animation: splitWaveRight 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+  }
+
+  @keyframes splitWaveLeft {
+    0% {
+      transform: translateX(0) skewY(0deg);
+      border-radius: 0;
+    }
+    45% {
+      transform: translateX(-45%) skewY(3.5deg);
+      border-top-right-radius: 90px;
+      border-bottom-right-radius: 90px;
+    }
+    100% {
+      transform: translateX(-125%) skewY(0deg);
+      border-radius: 0;
+    }
+  }
+
+  @keyframes splitWaveRight {
+    0% {
+      transform: translateX(0) skewY(0deg);
+      border-radius: 0;
+    }
+    45% {
+      transform: translateX(45%) skewY(-3.5deg);
+      border-top-left-radius: 90px;
+      border-bottom-left-radius: 90px;
+    }
+    100% {
+      transform: translateX(125%) skewY(0deg);
+      border-radius: 0;
+    }
+  }
+
+  /* मध्यभागातील मजकूर आणि फोटो */
+  .wc-content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+  }
+
+  .leaders-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(16px, 5vw, 32px);
+    margin-bottom: 20px;
+  }
+
+  .leader-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+
+  .leader-photo {
+    width: clamp(92px, 26vw, 120px);
+    height: clamp(92px, 26vw, 120px);
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 50%;
+    border: 3px solid #15803d;
+    box-shadow: 0 8px 18px rgba(21, 128, 61, 0.18);
+    background: #ffffff;
+  }
+
+  .leader-label {
+    margin-top: 8px;
+    font-size: clamp(0.78rem, 2.8vw, 0.9rem);
+    font-weight: 600;
+    color: #14532d;
+  }
+
+  .wc-overlay.start-reveal .fade-photo {
+    animation: fadeInUp 0.9s ease 1.05s forwards;
+  }
+
+  .wc-overlay.start-reveal .delay-photo {
+    animation: fadeInUp 0.9s ease 1.3s forwards;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .abhang-quote {
+    margin: 0 auto 22px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    border-left: 4px solid #15803d;
+    border-right: 4px solid #15803d;
+    border-radius: 12px;
+    font-size: clamp(1.02rem, 3.8vw, 1.24rem);
+    line-height: 1.75;
+    color: #1e293b;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .wc-overlay.start-reveal .abhang-quote {
+    animation: fadeInUp 0.95s ease 1.6s forwards;
+  }
+
+  .author-name {
+    display: block;
+    margin-top: 8px;
+    font-size: clamp(0.88rem, 3.2vw, 1rem);
+    font-weight: 700;
+    color: #15803d;
+  }
+
+  .wc-btn {
+    background: #15803d;
+    color: #ffffff;
+    border: none;
+    padding: 11px 28px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(21, 128, 61, 0.25);
+    opacity: 0;
+  }
+
+  .wc-overlay.start-reveal .wc-btn {
+    animation: fadeInUp 0.8s ease 1.95s forwards;
+  }
+</style>
+
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const screen = document.getElementById("welcome-curtain-screen");
+    const btn = document.getElementById("enterAppBtn");
+
+    requestAnimationFrame(() => {
+      screen.classList.add("start-reveal");
+    });
+
+    btn.addEventListener("click", () => {
+      screen.classList.add("hide");
+    });
+  });
+</script>
 <header>
   <div class="hdr-left">
     <img src="icons/android/launchericon-72x72.png" alt="Logo" class="brand-logo">
