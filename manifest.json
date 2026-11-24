@@ -1,0 +1,21 @@
+{
+  "name": "अंदाजपत्रक – नविन विहीर (SCP)",
+  "short_name": "WSM अंदाजपत्रक",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f4f7",
+  "theme_color": "#1f4e79",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/CKvP0VV4/FRMS-Logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/CKvP0VV4/FRMS-Logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
